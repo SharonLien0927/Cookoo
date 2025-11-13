@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cookoo廚呼</title>
+    <script>
+      // GitHub Pages 404 重定向處理
+      // 將所有請求重定向到 index.html，讓 Vue Router 處理路由
+      var path = window.location.pathname;
+      var search = window.location.search;
+      var hash = window.location.hash;
+      
+      // 獲取基礎路徑（如果部署在子路徑下）
+      var basePath = '';
+      var pathParts = path.split('/');
+      
+      // 如果路徑包含 index.html，移除它
+      if (path.includes('index.html')) {
+        path = path.replace(/\/index\.html$/, '') || '/';
+      }
+      
+      // 重定向到 index.html，保留原始路徑作為查詢參數或讓 Vue Router 處理
+      var redirectPath = basePath + '/index.html' + (path !== '/' ? '#' + path : '') + search + hash;
+      window.location.replace(redirectPath);
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <p style="text-align: center; padding: 20px; color: #666; font-family: sans-serif;">
+      正在重新導向...
+    </p>
+  </body>
+</html>
