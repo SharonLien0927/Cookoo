@@ -14,17 +14,43 @@
         />
       </div>
 
-      <!-- 分類標籤 -->
-      <div class="flex gap-2 overflow-x-auto pb-2 mb-4">
-        <button
-          v-for="cat in categories"
-          :key="cat"
-          @click="selectedCategory = cat"
-          class="px-4 py-2 rounded-lg text-sm whitespace-nowrap flex-shrink-0"
-          :class="selectedCategory === cat ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 shadow-soft'"
-        >
-          {{ cat }}
-        </button>
+      <!-- 三大類標籤 -->
+      <div class="mb-3">
+        <div class="flex gap-2 overflow-x-auto pb-2 mb-2">
+          <button
+            v-for="v in viewGroup"
+            :key="v"
+            @click="selectedView = v"
+            class="px-4 py-2 rounded-lg text-sm whitespace-nowrap flex-shrink-0"
+            :class="selectedView === v ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 shadow-soft'"
+          >
+            {{ v }}
+          </button>
+        </div>
+
+        <div class="flex gap-2 overflow-x-auto pb-2 mb-2">
+          <button
+            v-for="c in categoryGroup"
+            :key="c"
+            @click="selectedCategory = c"
+            class="px-4 py-2 rounded-lg text-sm whitespace-nowrap flex-shrink-0"
+            :class="selectedCategory === c ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 shadow-soft'"
+          >
+            {{ c }}
+          </button>
+        </div>
+
+        <div class="flex gap-2 overflow-x-auto pb-2">
+          <button
+            v-for="s in sortGroup"
+            :key="s"
+            @click="selectedSort = s"
+            class="px-4 py-2 rounded-lg text-sm whitespace-nowrap flex-shrink-0"
+            :class="selectedSort === s ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 shadow-soft'"
+          >
+            {{ s }}
+          </button>
+        </div>
       </div>
 
       <!-- 即將過期提醒 -->
@@ -86,18 +112,20 @@
           <div
             v-for="ing in filteredIngredients"
             :key="ing.id"
-            class="bg-white rounded-xl shadow-soft p-4 flex items-center justify-between"
+            class="rounded-xl shadow-soft p-4 flex items-center justify-between cursor-pointer"
+            :class="isExpired(ing) ? 'bg-red-50 border-2 border-red-300' : 'bg-white'"
+            @click="editIngredient(ing.id)"
           >
             <div>
-              <p class="font-medium text-gray-900">{{ ing.name }}</p>
-              <p v-if="ing.quantity" class="text-sm text-gray-500">{{ ing.quantity }}</p>
+              <p class="font-medium" :class="isExpired(ing) ? 'text-red-700 line-through' : 'text-gray-900'">{{ ing.name }}</p>
             </div>
-            <span
-              v-if="ing.isExpiringSoon"
-              class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs"
-            >
-              即將過期
-            </span>
+            <div class="text-right">
+              <div class="text-sm" :class="isExpired(ing) ? 'text-red-700' : 'text-gray-900'">{{ ing.quantity || '-' }}</div>
+              <div class="text-xs" :class="isExpired(ing) ? 'text-red-600' : 'text-gray-500'">
+                {{ ing.expiryDate ? new Date(ing.expiryDate).toLocaleDateString() : '' }}
+                <span v-if="isExpired(ing)" class="ml-1 font-semibold">已過期</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -111,26 +139,62 @@ import { Search, Plus, AlertCircle, Sparkles } from 'lucide-vue-next'
 import type { Ingredient, Recipe } from '../types'
 import { mockRecipes } from '../data/recipes'
 import RecipeCard from '../components/RecipeCard.vue'
+import { useRouter } from 'vue-router'
+import { ingredientStore } from '../stores/ingredientStore'
 
-const categories = ['全部', '我的食材', '蔬菜', '水果', '肉類', '海鮮', '蛋奶', '調味料', '其他']
+const viewGroup = ['所有食材', '我的食材', '食譜食材']
+const categoryGroup = ['全部分類', '蔬菜', '水果', '肉肉', '海鮮', '蛋奶', '調味料', '其他']
+const sortGroup = ['按數量排序', '按名稱排序', '按保鮮期排序']
 
 const searchQuery = ref('')
-const selectedCategory = ref('全部')
-const myIngredients = ref<Ingredient[]>([])
+const selectedView = ref('所有食材')
+const selectedCategory = ref('全部分類')
+const selectedSort = ref('按名稱排序')
+const router = useRouter()
+const myIngredients = ingredientStore.ingredients
 const aiRecommendations = ref<Recipe[]>([])
 
-const expiringSoon = computed(() => myIngredients.value.filter(ing => ing.isExpiringSoon))
+const expiringSoon = computed(() => myIngredients.filter(ing => ing.isExpiringSoon))
 
 const filteredIngredients = computed(() => {
-  return myIngredients.value.filter(ing => {
-    if (selectedCategory.value === '全部' || selectedCategory.value === '我的食材') return true
-    if (selectedCategory.value !== ing.category) return false
-    if (searchQuery.value && !ing.name.toLowerCase().includes(searchQuery.value.toLowerCase())) return false
-    return true
-  }).filter(ing =>
-    searchQuery.value === '' || ing.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
+  let list = myIngredients.slice()
+  // view filter
+  if (selectedView.value === '我的食材') {
+    // currently store only local "我的食材"; keep same
+  }
+
+  // category filter
+  if (selectedCategory.value !== '全部分類') {
+    const mappedCat = mapCategory(selectedCategory.value)
+    list = list.filter(ing => ing.category === mappedCat)
+  }
+
+  // search
+  if (searchQuery.value) {
+    list = list.filter(ing => ing.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
+  }
+
+  // sort
+  if (selectedSort.value === '按數量排序') {
+    list.sort((a, b) => (parseFloat(a.quantity || '0') || 0) - (parseFloat(b.quantity || '0') || 0))
+  } else if (selectedSort.value === '按名稱排序') {
+    list.sort((a, b) => a.name.localeCompare(b.name))
+  } else if (selectedSort.value === '按保鮮期排序') {
+    list.sort((a, b) => {
+      const da = a.expiryDate ? new Date(a.expiryDate).getTime() : Infinity
+      const db = b.expiryDate ? new Date(b.expiryDate).getTime() : Infinity
+      return da - db
+    })
+  }
+
+  return list
 })
+
+const mapCategory = (label: string) => {
+  if (label === '肉肉') return '肉類'
+  if (label === '全部分類') return ''
+  return label
+}
 
 const getRecommendations = () => {
   const ingredientNames = myIngredients.value.map(ing => ing.name.toLowerCase())
@@ -143,12 +207,17 @@ const getRecommendations = () => {
 }
 
 const addIngredient = () => {
-  const newIngredient: Ingredient = {
-    id: Date.now().toString(),
-    name: '新食材',
-    category: '其他',
-  }
-  myIngredients.value.push(newIngredient)
+  router.push('/ingredients/new')
+}
+
+const editIngredient = (id: string) => {
+  router.push(`/ingredients/${id}`)
+}
+
+const isExpired = (ing: Ingredient) => {
+  if (!ing.expiryDate) return false
+  const expiry = new Date(ing.expiryDate)
+  return expiry < new Date()
 }
 </script>
 

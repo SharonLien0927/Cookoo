@@ -19,6 +19,10 @@ export interface Ingredient {
   quantity?: string;
   expiryDate?: Date;
   isExpiringSoon?: boolean;
+  purchaseDate?: string; // ISO date string
+  shelfLifeDays?: number; // 保鮮度天數
+  image?: string; // base64 or url
+  tags?: string[];
 }
 
 export interface MenuItem {

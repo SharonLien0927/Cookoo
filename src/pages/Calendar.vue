@@ -2,7 +2,7 @@
   <div class="min-h-screen pb-20 bg-cream-50">
     <div class="max-w-md mx-auto px-4 py-6">
       <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">菜單日曆</h1>
+        <h1 class="text-2xl font-bold text-gray-900">日曆</h1>
         <div class="flex gap-2">
           <button
             @click="generateWeeklyMenu"
@@ -56,7 +56,7 @@
             v-for="day in days"
             :key="day.toISOString()"
             @click="selectedDate = format(day, 'yyyy-MM-dd')"
-            class="aspect-square rounded-lg text-sm transition-colors"
+            class="aspect-square rounded-lg text-sm transition-colors border-2"
             :class="getDayClass(day)"
           >
             <div>{{ format(day, 'd') }}</div>
@@ -72,40 +72,63 @@
       </div>
 
       <!-- 選中日期的菜單詳情 -->
-      <div v-if="selectedDate" class="bg-white rounded-2xl shadow-soft p-4">
-        <h3 class="font-semibold mb-3 text-gray-900">
-          {{ format(new Date(selectedDate), 'MM月dd日') }}
-        </h3>
-        <div v-if="getMenuForDate(new Date(selectedDate)).length > 0" class="space-y-2">
-          <div
-            v-for="(item, idx) in getMenuForDate(new Date(selectedDate))"
-            :key="idx"
-            class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg"
-          >
-            <span class="text-xs text-gray-500 w-12">{{ item.mealType }}</span>
-            <span class="flex-1 text-gray-900">{{ getRecipeName(item.recipeId) }}</span>
+      <div v-if="selectedDate" class="bg-white rounded-2xl shadow-soft p-4 flex items-center justify-between">
+        <div class="flex-1">
+          <h3 class="font-semibold mb-3 text-gray-900">
+            {{ format(new Date(selectedDate), 'MM月dd日') }}
+          </h3>
+          <div v-if="getMenuForDate(new Date(selectedDate)).length > 0" class="space-y-2">
+            <div
+              v-for="(item, idx) in getMenuForDate(new Date(selectedDate))"
+              :key="idx"
+              class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg"
+            >
+              <span class="text-xs text-gray-500 w-12">{{ item.mealType }}</span>
+              <span class="flex-1 text-gray-900">{{ getRecipeName(item.recipeId) }}</span>
+            </div>
           </div>
+          <p v-else class="text-gray-500 text-sm">這天還沒有安排菜單</p>
         </div>
-        <p v-else class="text-gray-500 text-sm">這天還沒有安排菜單</p>
+        <div v-if="getMenuForDate(new Date(selectedDate)).length === 0" class="ml-2">
+          <button
+            @click="showMenuFilter = true"
+            class="bg-primary-600 text-white p-2 rounded-lg"
+          >
+            <Plus :size="20" />
+          </button>
+        </div>
       </div>
+
+      <!-- 菜單篩選 Modal -->
+      <MenuFilter
+        :show="showMenuFilter"
+        @confirm="onMenuFilterConfirm"
+        @cancel="showMenuFilter = false"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek } from 'date-fns'
 import { Download, Plus } from 'lucide-vue-next'
 import type { MenuItem } from '../types'
 import { mockRecipes } from '../data/recipes'
+import MenuFilter from '../components/MenuFilter.vue'
 
 const currentDate = ref(new Date())
 const menuItems = ref<MenuItem[]>([])
 const selectedDate = ref<string | null>(null)
+const showMenuFilter = ref(false)
 
 const monthStart = computed(() => startOfMonth(currentDate.value))
 const monthEnd = computed(() => endOfMonth(currentDate.value))
-const days = computed(() => eachDayOfInterval({ start: monthStart.value, end: monthEnd.value }))
+const days = computed(() => {
+  const start = startOfWeek(monthStart.value, { weekStartsOn: 0 })
+  const end = endOfWeek(monthEnd.value, { weekStartsOn: 0 })
+  return eachDayOfInterval({ start, end })
+})
 
 const getMenuForDate = (date: Date) => {
   const dateStr = format(date, 'yyyy-MM-dd')
@@ -119,8 +142,10 @@ const getRecipeName = (recipeId: string) => {
 const getDayClass = (day: Date) => {
   const isCurrentMonth = isSameMonth(day, currentDate.value)
   const isCurrentDay = isToday(day)
+  const isSelected = selectedDate === format(day, 'yyyy-MM-dd')
   
   if (!isCurrentMonth) return 'text-gray-300'
+  if (isSelected) return 'bg-gray-100 text-gray-900 border-2 border-primary-600'
   if (isCurrentDay) return 'bg-primary-600 text-white font-semibold'
   return 'bg-gray-50 text-gray-700 hover:bg-gray-100'
 }
@@ -152,6 +177,39 @@ const generateWeeklyMenu = () => {
   }
   
   menuItems.value = [...menuItems.value, ...weeklyMenu]
+}
+
+const onMenuFilterConfirm = (meals: string[], time: number | null, difficulty: string | null) => {
+  if (!selectedDate.value) return
+  
+  let filtered = [...mockRecipes]
+  
+  if (meals.length > 0) {
+    filtered = filtered.filter(r => meals.includes(r.category))
+  }
+  
+  if (time !== null) {
+    filtered = filtered.filter(r => r.time <= time)
+  }
+  
+  if (difficulty !== null) {
+    filtered = filtered.filter(r => r.difficulty === difficulty)
+  }
+  
+  // Add meals to selected date
+  const selectedMeals = meals.length > 0 ? meals : ['早餐', '午餐', '晚餐']
+  selectedMeals.forEach(meal => {
+    const recipe = filtered.find(r => r.category === meal)
+    if (recipe) {
+      menuItems.value.push({
+        date: selectedDate.value!,
+        recipeId: recipe.id,
+        mealType: meal as '早餐' | '午餐' | '晚餐'
+      })
+    }
+  })
+  
+  showMenuFilter.value = false
 }
 
 const exportShoppingList = () => {

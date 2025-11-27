@@ -25,7 +25,7 @@ const route = useRoute()
 
 const tabs = [
   { path: '/', icon: Home, label: '主頁' },
-  { path: '/calendar', icon: Calendar, label: '菜單' },
+  { path: '/calendar', icon: Calendar, label: '日曆' },
   { path: '/ingredients', icon: Package, label: '食材' },
   { path: '/recipes', icon: BookOpen, label: '食譜' },
   { path: '/bot', icon: MessageCircle, label: 'Bot' },

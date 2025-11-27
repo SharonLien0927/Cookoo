@@ -33,6 +33,18 @@
 
       <!-- 篩選面板 -->
       <div v-if="showFilters" class="bg-white rounded-2xl shadow-soft p-4 mb-6">
+        <h3 class="font-semibold mb-3 text-gray-900">餐別</h3>
+        <div class="flex gap-2 mb-4">
+          <button
+            v-for="meal in ['早餐', '午餐', '晚餐']"
+            :key="meal"
+            @click="mealFilter = mealFilter === meal ? null : meal"
+            class="px-4 py-2 rounded-lg text-sm"
+            :class="mealFilter === meal ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'"
+          >
+            {{ meal }}
+          </button>
+        </div>
         <h3 class="font-semibold mb-3 text-gray-900">時間</h3>
         <div class="flex gap-2 mb-4">
           <button
@@ -45,16 +57,16 @@
             {{ time }}分鐘內
           </button>
         </div>
-        <h3 class="font-semibold mb-3 text-gray-900">餐別</h3>
+        <h3 class="font-semibold mb-3 text-gray-900">難度</h3>
         <div class="flex gap-2">
           <button
-            v-for="meal in ['早餐', '午餐', '晚餐']"
-            :key="meal"
-            @click="mealFilter = mealFilter === meal ? null : meal"
+            v-for="diff in ['簡單', '中等', '困難']"
+            :key="diff"
+            @click="difficultyFilter = difficultyFilter === diff ? null : diff"
             class="px-4 py-2 rounded-lg text-sm"
-            :class="mealFilter === meal ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'"
+            :class="difficultyFilter === diff ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'"
           >
-            {{ meal }}
+            {{ diff }}
           </button>
         </div>
       </div>
@@ -84,18 +96,23 @@ import { mockRecipes } from '../data/recipes'
 
 const recipes = ref<Recipe[]>([])
 const showFilters = ref(false)
-const timeFilter = ref<number | null>(null)
 const mealFilter = ref<string | null>(null)
+const timeFilter = ref<number | null>(null)
+const difficultyFilter = ref<string | null>(null)
 
 const getRandomRecipes = () => {
   let filtered = [...mockRecipes]
   
+  if (mealFilter.value) {
+    filtered = filtered.filter(r => r.category === mealFilter.value)
+  }
+  
   if (timeFilter.value) {
     filtered = filtered.filter(r => r.time <= timeFilter.value!)
   }
-  
-  if (mealFilter.value) {
-    filtered = filtered.filter(r => r.category === mealFilter.value)
+
+  if (difficultyFilter.value) {
+    filtered = filtered.filter(r => r.difficulty === difficultyFilter.value)
   }
   
   // 隨機選取5道

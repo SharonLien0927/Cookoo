@@ -1,7 +1,15 @@
 <template>
   <div class="min-h-screen pb-20 bg-cream-50">
     <div class="max-w-md mx-auto px-4 py-6">
-      <h1 class="text-2xl font-bold text-gray-900 mb-6">食譜瀏覽</h1>
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">食譜瀏覽</h1>
+        <button
+          @click="router.push('/recipes/new')"
+          class="bg-primary-600 text-white p-2 rounded-lg shadow-soft"
+        >
+          <Plus :size="20" />
+        </button>
+      </div>
 
       <!-- 搜尋框 -->
       <div class="relative mb-4">
@@ -47,7 +55,7 @@
       </div>
 
       <!-- 特殊標籤 -->
-      <div class="mb-6">
+      <div class="mb-4">
         <h3 class="text-sm font-semibold text-gray-700 mb-2">特色分類</h3>
         <div class="flex gap-2 overflow-x-auto pb-2">
           <button
@@ -60,6 +68,17 @@
             {{ tag }}
           </button>
         </div>
+      </div>
+
+      <!-- 我的最愛 -->
+      <div class="mb-6">
+        <button
+          @click="showFavoritesOnly = !showFavoritesOnly"
+          class="px-4 py-2 rounded-lg text-sm w-full"
+          :class="showFavoritesOnly ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 shadow-soft'"
+        >
+          ♡ 我的最愛
+        </button>
       </div>
 
       <!-- 食譜列表 -->
@@ -81,7 +100,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search } from 'lucide-vue-next'
+import { Search, Plus } from 'lucide-vue-next'
 import RecipeCard from '../components/RecipeCard.vue'
 import type { Recipe } from '../types'
 import { mockRecipes } from '../data/recipes'
@@ -91,6 +110,7 @@ const searchQuery = ref('')
 const selectedCategory = ref('全部')
 const selectedDifficulty = ref('全部')
 const selectedTag = ref<string | null>(null)
+const showFavoritesOnly = ref(false)
 
 const categories = ['全部', '早餐', '午餐', '晚餐', '點心']
 const difficulties = ['全部', '簡單', '中等', '困難']
@@ -108,6 +128,9 @@ const filteredRecipes = computed(() => {
       return false
     }
     if (selectedTag.value && !recipe.tags.includes(selectedTag.value)) {
+      return false
+    }
+    if (showFavoritesOnly.value && !recipe.isFavorite) {
       return false
     }
     return true
