@@ -93,32 +93,7 @@ const expiryDisplay = computed(() => {
   return d.toLocaleDateString()
 })
 
-const expiryDisplay = computed(() => {
-  // compute expiryDate
-  if (form.value.purchaseDate && form.value.shelfLifeDays) {
-    const d = new Date(form.value.purchaseDate)
-    d.setDate(d.getDate() + (form.value.shelfLifeDays || 0))
-    form.value.expiryDate = d
-  }
 
-  if (isEdit && id) {
-    ingredientStore.update(id, form.value as Partial<Ingredient>)
-  } else {
-    const newItem: Ingredient = {
-      id: Date.now().toString(),
-      name: form.value.name || '新食材',
-      category: (form.value.category as any) || '其他',
-      quantity: form.value.quantity,
-      expiryDate: form.value.expiryDate as any,
-      isExpiringSoon: false,
-      purchaseDate: form.value.purchaseDate,
-      shelfLifeDays: form.value.shelfLifeDays,
-    }
-    ingredientStore.add(newItem)
-  }
-
-  router.push('/ingredients')
-}
 
 const onCancel = () => {
   router.push('/ingredients')
