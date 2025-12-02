@@ -1,37 +1,44 @@
 <template>
-  <div class="min-h-screen pb-20 bg-cream-50">
-    <div class="max-w-md mx-auto px-4 py-6">
+  <div class="min-h-screen bg-gradient-to-b from-orange-50 to-white pb-20">
+    <!-- 頂部手繪裝飾 -->
+    <div class="relative h-20 overflow-hidden">
+      <svg viewBox="0 0 400 80" class="w-full h-full text-orange-300 opacity-40">
+        <path d="M 0 40 Q 50 20, 100 40 T 200 40 T 300 40 T 400 40" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+      </svg>
+    </div>
+
+    <div class="max-w-md mx-auto px-4 py-4">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-900">{{ isEdit ? '編輯食譜' : '新增食譜' }}</h1>
       </div>
 
-      <form @submit.prevent="onSave" class="bg-white rounded-2xl shadow-soft p-4 space-y-4">
+      <form @submit.prevent="onSave" class="bg-white rounded-3xl shadow-md border-2 border-orange-200 p-4 space-y-4">
         <!-- 食譜名稱 -->
         <div>
-          <label class="block text-sm text-gray-700 mb-1">食譜名稱</label>
-          <input v-model="form.name" required class="w-full px-3 py-2 border rounded-lg" />
+          <label class="block text-sm font-semibold text-gray-700 mb-1">食譜名稱</label>
+          <input v-model="form.name" required class="w-full px-3 py-2 border-2 border-orange-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
         </div>
 
         <!-- 封面圖 -->
         <div>
-          <label class="block text-sm text-gray-700 mb-1">封面圖</label>
-          <input type="file" @change="onFileChange" accept="image/*" />
+          <label class="block text-sm font-semibold text-gray-700 mb-1">封面圖</label>
+          <input type="file" @change="onFileChange" accept="image/*" class="text-sm" />
           <div v-if="form.image" class="mt-2">
-            <img :src="form.image" alt="preview" class="w-full h-40 object-cover rounded" />
+            <img :src="form.image" alt="preview" class="w-full h-40 object-cover rounded-2xl border-2 border-orange-200" />
           </div>
         </div>
 
         <!-- 時間 -->
         <div>
-          <label class="block text-sm text-gray-700 mb-1">時間 (分鐘內)</label>
-          <div class="flex gap-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">⏱️ 時間 (分鐘內)</label>
+          <div class="flex gap-2 flex-wrap">
             <button
               v-for="time in [10, 15, 20, 30]"
               :key="time"
               type="button"
               @click="form.time = form.time === time ? undefined : time"
-              class="px-3 py-2 rounded-lg text-sm"
-              :class="form.time === time ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'"
+              class="px-4 py-2 rounded-full text-sm font-medium border-2 transition-all"
+              :class="form.time === time ? 'bg-orange-400 text-white border-orange-400' : 'bg-white text-gray-700 border-orange-200'"
             >
               {{ time }}
             </button>
@@ -40,15 +47,15 @@
 
         <!-- 餐別 (多選) -->
         <div>
-          <label class="block text-sm text-gray-700 mb-1">餐別 (可複選)</label>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">🍽️ 餐別 (可複選)</label>
           <div class="flex gap-2 flex-wrap">
             <button
-              v-for="cat in ['早餐', '午餐', '晚餐']"
+              v-for="cat in ['早餐', '午餐', '晚餐', '點心']"
               :key="cat"
               type="button"
               @click="toggleMealCategory(cat)"
-              class="px-3 py-2 rounded-lg text-sm"
-              :class="mealCategories.includes(cat) ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'"
+              class="px-4 py-2 rounded-full text-sm font-medium border-2 transition-all"
+              :class="mealCategories.includes(cat) ? 'bg-orange-400 text-white border-orange-400' : 'bg-white text-gray-700 border-orange-200'"
             >
               {{ cat }}
             </button>
@@ -57,15 +64,15 @@
 
         <!-- 難度 -->
         <div>
-          <label class="block text-sm text-gray-700 mb-1">難度</label>
-          <div class="flex gap-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">⭐ 難度</label>
+          <div class="flex gap-2 flex-wrap">
             <button
               v-for="diff in ['簡單', '中等', '困難']"
               :key="diff"
               type="button"
               @click="form.difficulty = form.difficulty === diff ? undefined : diff"
-              class="px-3 py-2 rounded-lg text-sm"
-              :class="form.difficulty === diff ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'"
+              class="px-4 py-2 rounded-full text-sm font-medium border-2 transition-all"
+              :class="form.difficulty === diff ? 'bg-orange-400 text-white border-orange-400' : 'bg-white text-gray-700 border-orange-200'"
             >
               {{ diff }}
             </button>
@@ -74,15 +81,15 @@
 
         <!-- 特色分類 (多選) -->
         <div>
-          <label class="block text-sm text-gray-700 mb-1">特色分類 (可複選)</label>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">✨ 特色分類 (可複選)</label>
           <div class="flex gap-2 flex-wrap">
             <button
               v-for="tag in ['快速料理', '一鍋完成', '便當菜', '少洗碗']"
               :key="tag"
               type="button"
               @click="toggleTag(tag)"
-              class="px-3 py-2 rounded-lg text-sm"
-              :class="form.tags?.includes(tag) ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'"
+              class="px-4 py-2 rounded-full text-sm font-medium border-2 transition-all"
+              :class="form.tags?.includes(tag) ? 'bg-orange-400 text-white border-orange-400' : 'bg-white text-gray-700 border-orange-200'"
             >
               {{ tag }}
             </button>
@@ -91,20 +98,20 @@
 
         <!-- 食材列表 -->
         <div>
-          <label class="block text-sm text-gray-700 mb-1">食材</label>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">🥘 食材</label>
           <div class="space-y-2 mb-3">
             <div
               v-for="(ing, idx) in form.ingredients"
               :key="idx"
-              class="flex items-center gap-2 bg-gray-50 p-2 rounded"
+              class="flex items-center gap-2 bg-orange-50 p-3 rounded-xl border border-orange-200 group"
             >
-              <span class="flex-1">• {{ ing.name }} {{ ing.quantity }}</span>
+              <span class="flex-1 font-medium text-gray-700">• {{ ing.name }} <span class="text-orange-600 font-semibold">{{ ing.quantity }}</span></span>
               <button
                 type="button"
                 @click="removeIngredient(idx)"
-                class="text-red-600 hover:text-red-700 text-sm"
+                class="text-red-500 hover:text-red-700 font-bold opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                移除
+                ✕
               </button>
             </div>
           </div>
@@ -112,17 +119,17 @@
             <input
               v-model="newIngredient.name"
               placeholder="食材名稱"
-              class="flex-1 px-2 py-1 text-sm border rounded"
+              class="flex-1 px-3 py-2 text-sm border-2 border-orange-200 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
             <input
               v-model="newIngredient.quantity"
               placeholder="數量"
-              class="px-2 py-1 text-sm border rounded w-20"
+              class="px-3 py-2 text-sm border-2 border-orange-200 rounded-full w-24 focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
             <button
               type="button"
               @click="addIngredient"
-              class="px-3 py-1 bg-primary-600 text-white text-sm rounded"
+              class="px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-500 text-white text-sm rounded-full font-semibold shadow-md hover:shadow-lg transition-all"
             >
               新增
             </button>
@@ -131,21 +138,23 @@
 
         <!-- 製作步驟 -->
         <div>
-          <label class="block text-sm text-gray-700 mb-1">製作步驟</label>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">👨‍🍳 製作步驟</label>
           <div class="space-y-2 mb-3">
             <div
               v-for="(step, idx) in form.steps"
               :key="idx"
-              class="flex items-start gap-2 bg-gray-50 p-2 rounded"
+              class="flex items-start gap-2 bg-orange-50 p-3 rounded-xl border border-orange-200 group"
             >
-              <span class="text-sm font-semibold text-gray-600 flex-shrink-0">[{{ idx + 1 }}]</span>
-              <span class="flex-1 text-sm">{{ step }}</span>
+              <span class="flex-shrink-0 w-6 h-6 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                {{ idx + 1 }}
+              </span>
+              <span class="flex-1 text-sm text-gray-700 font-medium">{{ step }}</span>
               <button
                 type="button"
                 @click="removeStep(idx)"
-                class="text-red-600 hover:text-red-700 text-sm flex-shrink-0"
+                class="text-red-500 hover:text-red-700 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
               >
-                移除
+                ✕
               </button>
             </div>
           </div>
@@ -153,12 +162,12 @@
             <input
               v-model="newStep"
               placeholder="輸入步驟"
-              class="flex-1 px-2 py-2 text-sm border rounded"
+              class="flex-1 px-3 py-2 text-sm border-2 border-orange-200 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
             <button
               type="button"
               @click="addStep"
-              class="px-3 py-2 bg-primary-600 text-white text-sm rounded"
+              class="px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-500 text-white text-sm rounded-full font-semibold shadow-md hover:shadow-lg transition-all"
             >
               新增
             </button>
@@ -167,21 +176,21 @@
 
         <!-- 小提示 -->
         <div>
-          <label class="block text-sm text-gray-700 mb-1">小提示</label>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">💡 小提示</label>
           <textarea
             v-model="form.tips"
             rows="2"
-            class="w-full px-3 py-2 border rounded-lg text-sm"
+            class="w-full px-3 py-2 border-2 border-orange-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             placeholder="可選填"
-          />
+          ></textarea>
         </div>
 
         <!-- 按鈕 -->
         <div class="flex gap-2 mt-6">
-          <button type="submit" class="flex-1 bg-primary-600 text-white px-4 py-2 rounded-xl font-semibold">
+          <button type="submit" class="flex-1 bg-gradient-to-r from-orange-400 to-orange-500 text-white px-4 py-3 rounded-full font-bold shadow-md hover:shadow-lg transition-all">
             儲存
           </button>
-          <button type="button" @click="onCancel" class="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-semibold">
+          <button type="button" @click="onCancel" class="flex-1 bg-white text-gray-700 px-4 py-3 rounded-full font-semibold border-2 border-orange-200">
             取消
           </button>
         </div>
@@ -194,7 +203,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Recipe, Ingredient } from '../types'
-import { mockRecipes } from '../data/recipes'
+import { recipeStore } from '../stores/recipeStore'
 
 const route = useRoute()
 const router = useRouter()
@@ -219,7 +228,7 @@ const newIngredient = ref({ name: '', quantity: '' })
 const newStep = ref('')
 
 if (isEdit) {
-  const item = mockRecipes.find(r => r.id === id)
+  const item = recipeStore.getById(id)
   if (item) {
     form.value = { ...item }
     mealCategories.value = [item.category]
@@ -296,8 +305,30 @@ const onSave = () => {
     return
   }
 
-  // For now, just return to recipes page
-  // In production, would save to backend or local storage
+  // 使用第一個選中的餐別作為主類別
+  form.value.category = mealCategories.value[0]
+
+  if (isEdit && id) {
+    // 更新現有食譜
+    recipeStore.update(id, form.value)
+  } else {
+    // 新增食譜
+    const newRecipe: Recipe = {
+      id: Date.now().toString(),
+      name: form.value.name!,
+      image: form.value.image || 'https://via.placeholder.com/400x300',
+      time: form.value.time || 15,
+      difficulty: form.value.difficulty || '簡單',
+      category: form.value.category || '晚餐',
+      tags: form.value.tags || [],
+      ingredients: form.value.ingredients || [],
+      steps: form.value.steps || [],
+      tips: form.value.tips || '',
+      isFavorite: false,
+    }
+    recipeStore.add(newRecipe)
+  }
+
   router.push('/recipes')
 }
 

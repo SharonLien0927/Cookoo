@@ -7,7 +7,7 @@ export const mockRecipes: Recipe[] = [
     image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400',
     time: 10,
     difficulty: '簡單',
-    category: '晚餐',
+    category: '早餐',
     tags: ['快速料理', '少洗碗'],
     ingredients: [
       { id: 'i1', name: '雞蛋', category: '蛋奶', quantity: '3顆' },
@@ -21,6 +21,7 @@ export const mockRecipes: Recipe[] = [
       '加入炒蛋拌勻，調味即可',
     ],
     tips: '番茄先炒軟再下蛋，口感更佳',
+    isFavorite: false,
   },
   {
     id: '2',
@@ -28,7 +29,7 @@ export const mockRecipes: Recipe[] = [
     image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400',
     time: 15,
     difficulty: '簡單',
-    category: '晚餐',
+    category: '午餐',
     tags: ['快速料理', '一鍋完成'],
     ingredients: [
       { id: 'i4', name: '義大利麵', category: '其他', quantity: '100g' },
@@ -41,6 +42,7 @@ export const mockRecipes: Recipe[] = [
       '加入煮好的麵條拌炒',
       '調味即可',
     ],
+    isFavorite: false,
   },
   {
     id: '3',
@@ -62,6 +64,7 @@ export const mockRecipes: Recipe[] = [
       '倒入醬汁煮滾，淋上蛋液',
       '蓋鍋蓋至蛋半熟，盛在飯上',
     ],
+    isFavorite: false,
   },
   {
     id: '4',
@@ -82,6 +85,7 @@ export const mockRecipes: Recipe[] = [
       '加入白飯炒散',
       '加入炒蛋拌勻即可',
     ],
+    isFavorite: false,
   },
   {
     id: '5',
@@ -102,6 +106,7 @@ export const mockRecipes: Recipe[] = [
       '加入豆腐輕輕拌炒',
       '加水煮滾，勾芡即可',
     ],
+    isFavorite: false,
   },
   {
     id: '6',
@@ -109,7 +114,7 @@ export const mockRecipes: Recipe[] = [
     image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400',
     time: 25,
     difficulty: '困難',
-    category: '晚餐',
+    category: '點心',
     tags: ['便當菜'],
     ingredients: [
       { id: 'i16', name: '白飯', category: '其他', quantity: '1碗' },
@@ -122,6 +127,7 @@ export const mockRecipes: Recipe[] = [
       '將炒飯包在蛋皮中',
       '淋上番茄醬即可',
     ],
+    isFavorite: false,
   },
 ];
 

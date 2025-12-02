@@ -1,52 +1,59 @@
 <template>
-  <div class="min-h-screen pb-20 bg-cream-50">
-    <div class="max-w-md mx-auto px-4 py-6">
+  <div class="min-h-screen bg-gradient-to-b from-orange-50 to-white pb-20">
+    <!-- 頂部手繪裝飾 -->
+    <div class="relative h-20 overflow-hidden">
+      <svg viewBox="0 0 400 80" class="w-full h-full text-orange-300 opacity-40">
+        <path d="M 0 40 Q 50 20, 100 40 T 200 40 T 300 40 T 400 40" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+      </svg>
+    </div>
+
+    <div class="max-w-md mx-auto px-4 py-4">
       <h1 class="text-2xl font-bold text-gray-900 mb-6">食材管理</h1>
 
       <!-- 搜尋框 -->
       <div class="relative mb-4">
-        <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" :size="20" />
+        <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-orange-400" :size="20" />
         <input
           type="text"
           placeholder="搜尋食材..."
           v-model="searchQuery"
-          class="w-full pl-10 pr-4 py-3 bg-white rounded-xl shadow-soft border-0 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          class="w-full pl-10 pr-4 py-3 bg-white rounded-full shadow-md border-2 border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-400"
         />
       </div>
 
       <!-- 三大類標籤 -->
       <div class="mb-3">
-        <div class="flex gap-2 overflow-x-auto pb-2 mb-2">
+        <div class="flex gap-2 overflow-x-auto pb-2 mb-2 scroll-smooth" style="scroll-behavior: smooth;">
           <button
             v-for="v in viewGroup"
             :key="v"
             @click="selectedView = v"
-            class="px-4 py-2 rounded-lg text-sm whitespace-nowrap flex-shrink-0"
-            :class="selectedView === v ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 shadow-soft'"
+            class="px-4 py-2 rounded-full text-sm whitespace-nowrap flex-shrink-0 font-medium transition-all border-2"
+            :class="selectedView === v ? 'bg-orange-400 text-white border-orange-400' : 'bg-white text-gray-700 shadow-md border-orange-200'"
           >
             {{ v }}
           </button>
         </div>
 
-        <div class="flex gap-2 overflow-x-auto pb-2 mb-2">
+        <div class="flex gap-2 overflow-x-auto pb-2 mb-2 scroll-smooth" style="scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none;" @wheel.prevent="onCategoryScroll">
           <button
             v-for="c in categoryGroup"
             :key="c"
             @click="selectedCategory = c"
-            class="px-4 py-2 rounded-lg text-sm whitespace-nowrap flex-shrink-0"
-            :class="selectedCategory === c ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 shadow-soft'"
+            class="px-4 py-2 rounded-full text-sm whitespace-nowrap flex-shrink-0 font-medium transition-all border-2"
+            :class="selectedCategory === c ? 'bg-orange-400 text-white border-orange-400' : 'bg-white text-gray-700 shadow-md border-orange-200'"
           >
             {{ c }}
           </button>
         </div>
 
-        <div class="flex gap-2 overflow-x-auto pb-2">
+        <div class="flex gap-2 overflow-x-auto pb-2 scroll-smooth" style="scroll-behavior: smooth;">
           <button
             v-for="s in sortGroup"
             :key="s"
             @click="selectedSort = s"
-            class="px-4 py-2 rounded-lg text-sm whitespace-nowrap flex-shrink-0"
-            :class="selectedSort === s ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 shadow-soft'"
+            class="px-4 py-2 rounded-full text-sm whitespace-nowrap flex-shrink-0 font-medium transition-all border-2"
+            :class="selectedSort === s ? 'bg-orange-400 text-white border-orange-400' : 'bg-white text-gray-700 shadow-md border-orange-200'"
           >
             {{ s }}
           </button>
@@ -54,15 +61,15 @@
       </div>
 
       <!-- 即將過期提醒 -->
-      <div v-if="expiringSoon.length > 0" class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4 flex items-start gap-3">
-        <AlertCircle class="text-yellow-600 flex-shrink-0 mt-0.5" :size="20" />
+      <div v-if="expiringSoon.length > 0" class="bg-orange-50 border-2 border-orange-300 rounded-3xl p-4 mb-4 flex items-start gap-3">
+        <AlertCircle class="text-orange-600 flex-shrink-0 mt-0.5" :size="20" />
         <div class="flex-1">
-          <h3 class="font-semibold text-yellow-900 mb-1">即將過期提醒</h3>
+          <h3 class="font-bold text-orange-900 mb-1">⏰ 即將過期提醒</h3>
           <div class="space-y-1">
             <p
               v-for="ing in expiringSoon"
               :key="ing.id"
-              class="text-sm text-yellow-800"
+              class="text-sm text-orange-800 font-medium"
             >
               {{ ing.name }} {{ ing.expiryDate ? `(${ing.expiryDate.toLocaleDateString()})` : '' }}
             </p>
@@ -74,7 +81,7 @@
       <button
         v-if="myIngredients.length > 0"
         @click="getRecommendations"
-        class="w-full bg-primary-600 text-white px-4 py-3 rounded-xl shadow-card mb-4 flex items-center justify-center gap-2 font-semibold"
+        class="w-full bg-gradient-to-r from-orange-400 to-orange-500 text-white px-4 py-3 rounded-full shadow-md mb-4 flex items-center justify-center gap-2 font-bold hover:shadow-lg transition-all"
       >
         <Sparkles :size="20" />
         AI 推薦可做的料理
@@ -95,36 +102,46 @@
       <!-- 我的食材列表 -->
       <div>
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-gray-900">我的食材</h2>
+          <h2 class="text-lg font-bold text-gray-900">我的食材</h2>
           <button
             @click="addIngredient"
-            class="bg-primary-600 text-white p-2 rounded-lg shadow-soft"
+            class="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-3 rounded-full shadow-md hover:shadow-lg transition-all"
           >
             <Plus :size="20" />
           </button>
         </div>
 
-        <div v-if="filteredIngredients.length === 0" class="bg-white rounded-2xl shadow-soft p-8 text-center text-gray-500">
-          <p class="mb-2">還沒有添加食材</p>
+        <div v-if="filteredIngredients.length === 0" class="bg-white rounded-3xl shadow-md border-2 border-orange-200 p-8 text-center text-gray-500">
+          <p class="text-4xl mb-2">🥬</p>
+          <p class="mb-2 font-medium">還沒有添加食材</p>
           <p class="text-sm">點擊右上角 + 按鈕開始管理你的食材</p>
         </div>
         <div v-else class="space-y-2">
           <div
             v-for="ing in filteredIngredients"
             :key="ing.id"
-            class="rounded-xl shadow-soft p-4 flex items-center justify-between cursor-pointer"
-            :class="isExpired(ing) ? 'bg-red-50 border-2 border-red-300' : 'bg-white'"
+            class="rounded-2xl shadow-md p-4 flex items-center justify-between cursor-pointer transition-all hover:shadow-lg group relative"
+            :class="isExpired(ing) ? 'bg-red-100 border-2 border-red-400' : 'bg-white border-2 border-orange-200'"
             @click="editIngredient(ing.id)"
           >
             <div>
-              <p class="font-medium" :class="isExpired(ing) ? 'text-red-700 line-through' : 'text-gray-900'">{{ ing.name }}</p>
+              <p class="font-bold" :class="isExpired(ing) ? 'text-red-700 line-through' : 'text-gray-900'">{{ ing.name }}</p>
             </div>
-            <div class="text-right">
-              <div class="text-sm" :class="isExpired(ing) ? 'text-red-700' : 'text-gray-900'">{{ ing.quantity || '-' }}</div>
-              <div class="text-xs" :class="isExpired(ing) ? 'text-red-600' : 'text-gray-500'">
-                {{ ing.expiryDate ? new Date(ing.expiryDate).toLocaleDateString() : '' }}
-                <span v-if="isExpired(ing)" class="ml-1 font-semibold">已過期</span>
+            <div class="flex items-center gap-3">
+              <div class="text-right">
+                <div class="text-sm font-semibold" :class="isExpired(ing) ? 'text-red-700' : 'text-gray-900'">{{ ing.quantity || '-' }}</div>
+                <div class="text-xs font-medium" :class="isExpired(ing) ? 'text-red-600' : 'text-orange-600'">
+                  {{ ing.expiryDate ? new Date(ing.expiryDate).toLocaleDateString() : '' }}
+                  <span v-if="isExpired(ing)" class="ml-1 font-bold">已過期</span>
+                </div>
               </div>
+              <button
+                @click.stop="deleteIngredient(ing.id)"
+                class="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 font-bold text-xl"
+                title="刪除"
+              >
+                ✕
+              </button>
             </div>
           </div>
         </div>
@@ -218,6 +235,18 @@ const isExpired = (ing: Ingredient) => {
   if (!ing.expiryDate) return false
   const expiry = new Date(ing.expiryDate)
   return expiry < new Date()
+}
+
+const deleteIngredient = (id: string) => {
+  if (confirm('確定要刪除此食材嗎？')) {
+    ingredientStore.remove(id)
+  }
+}
+
+const onCategoryScroll = (e: WheelEvent) => {
+  const container = e.currentTarget as HTMLElement
+  e.preventDefault()
+  container.scrollLeft += e.deltaY
 }
 </script>
 
