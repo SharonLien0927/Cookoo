@@ -4,7 +4,7 @@ export const mockRecipes: Recipe[] = [
   {
     id: '1',
     name: '番茄炒蛋',
-    image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400',
+    image: '/Img/番茄炒蛋.jpeg',
     time: 10,
     difficulty: '簡單',
     category: '早餐',
@@ -26,7 +26,7 @@ export const mockRecipes: Recipe[] = [
   {
     id: '2',
     name: '蒜香義大利麵',
-    image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400',
+    image: '/Img/蒜香義大利麵.jpeg',
     time: 15,
     difficulty: '簡單',
     category: '午餐',
@@ -47,7 +47,7 @@ export const mockRecipes: Recipe[] = [
   {
     id: '3',
     name: '日式親子丼',
-    image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400',
+    image: '/Img/日式親子丼.jpeg',
     time: 20,
     difficulty: '中等',
     category: '晚餐',
@@ -69,7 +69,7 @@ export const mockRecipes: Recipe[] = [
   {
     id: '4',
     name: '韓式泡菜炒飯',
-    image: 'https://images.unsplash.com/photo-1574659098880-1c0c0e0b5c0e?w=400',
+    image: '/Img/韓式泡菜炒飯.jpeg',
     time: 12,
     difficulty: '簡單',
     category: '午餐',
@@ -90,7 +90,7 @@ export const mockRecipes: Recipe[] = [
   {
     id: '5',
     name: '麻婆豆腐',
-    image: 'https://images.unsplash.com/photo-1609501676725-7186f3a1fe2f?w=400',
+    image: '/Img/麻婆豆腐.jpeg',
     time: 18,
     difficulty: '中等',
     category: '晚餐',
@@ -111,7 +111,7 @@ export const mockRecipes: Recipe[] = [
   {
     id: '6',
     name: '日式蛋包飯',
-    image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400',
+    image: '/Img/日式蛋包飯.jpeg',
     time: 25,
     difficulty: '困難',
     category: '點心',
