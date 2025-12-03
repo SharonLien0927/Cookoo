@@ -1,14 +1,14 @@
 <template>
-  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-bottom z-50">
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-orange-200 safe-area-bottom z-50">
     <div class="flex justify-around items-center h-16 px-2">
       <router-link
         v-for="tab in tabs"
         :key="tab.path"
         :to="tab.path"
         class="flex flex-col items-center justify-center flex-1 h-full transition-colors"
-        :class="isActive(tab.path) ? 'text-primary-600' : 'text-gray-400'"
+        :class="isActive(tab.path) ? 'text-orange-600' : 'text-gray-400'"
       >
-        <component :is="tab.icon" :size="24" :class="isActive(tab.path) ? 'text-primary-600' : 'text-gray-400'" />
+        <component :is="tab.icon" :size="24" :class="isActive(tab.path) ? 'text-orange-600' : 'text-gray-400'" />
         <span class="text-xs mt-1" :class="{ 'font-medium': isActive(tab.path) }">
           {{ tab.label }}
         </span>

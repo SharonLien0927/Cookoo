@@ -1,14 +1,21 @@
 <template>
-  <div class="min-h-screen pb-20 bg-cream-50 flex flex-col">
-    <div class="max-w-md mx-auto w-full flex flex-col h-screen">
+  <div class="min-h-screen pb-20 bg-gradient-to-b from-orange-50 to-white flex flex-col">
+    <!-- 頂部手繪裝飾 -->
+    <div class="relative h-20 overflow-hidden">
+      <svg viewBox="0 0 400 80" class="w-full h-full text-orange-300 opacity-40">
+        <path d="M 0 40 Q 50 20, 100 40 T 200 40 T 300 40 T 400 40" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+      </svg>
+    </div>
+
+    <div class="max-w-md mx-auto w-full flex flex-col flex-1">
       <!-- 標題列 -->
-      <div class="bg-white border-b border-gray-200 px-4 py-4 flex items-center gap-3">
-        <div class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
+      <div class="bg-white rounded-3xl shadow-md border-2 border-orange-200 mx-4 mb-4 px-4 py-4 flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-r from-orange-400 to-orange-500 rounded-full flex items-center justify-center">
           <Sparkles class="text-white" :size="20" />
         </div>
         <div>
-          <h1 class="font-semibold text-gray-900">AI 料理助手</h1>
-          <p class="text-xs text-gray-500">隨時為你推薦快速料理</p>
+          <h1 class="font-bold text-gray-900">AI 料理助手</h1>
+          <p class="text-xs text-gray-600 font-medium">隨時為你推薦快速料理</p>
         </div>
       </div>
 
@@ -22,9 +29,9 @@
         >
           <div
             class="max-w-[80%] rounded-2xl p-4"
-            :class="message.role === 'user' ? 'bg-primary-600 text-white' : 'bg-white text-gray-900 shadow-soft'"
+            :class="message.role === 'user' ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-white border-orange-400' : 'bg-white text-gray-900 shadow-md border-orange-200'"
           >
-            <p class="whitespace-pre-wrap">{{ message.content }}</p>
+            <p class="whitespace-pre-wrap font-medium">{{ message.content }}</p>
             <div v-if="message.recipes && message.recipes.length > 0" class="mt-4 space-y-3">
               <RecipeCard
                 v-for="recipe in message.recipes"
@@ -37,30 +44,32 @@
       </div>
 
       <!-- 輸入區域 -->
-      <div class="bg-white border-t border-gray-200 px-4 py-3 safe-area-bottom">
-        <div class="flex items-end gap-2">
-          <button class="p-2 text-gray-500 hover:text-gray-700">
-            <Camera :size="20" />
-          </button>
-          <button class="p-2 text-gray-500 hover:text-gray-700">
-            <Mic :size="20" />
-          </button>
-          <div class="flex-1 relative">
-            <input
-              type="text"
-              v-model="input"
-              @keypress.enter="handleSend"
-              placeholder="輸入你的需求..."
-              class="w-full px-4 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
+      <div class="mx-4 my-4">
+        <div class="bg-white border-2 border-orange-200 rounded-3xl px-4 py-3 shadow-md">
+          <div class="flex items-end gap-2">
+            <button class="p-2 text-orange-400 hover:text-orange-500 transition-all">
+              <Camera :size="20" />
+            </button>
+            <button class="p-2 text-orange-400 hover:text-orange-500 transition-all">
+              <Mic :size="20" />
+            </button>
+            <div class="flex-1 relative">
+              <input
+                type="text"
+                v-model="input"
+                @keypress.enter="handleSend"
+                placeholder="輸入你的需求..."
+                class="w-full px-4 py-2 bg-orange-50 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-400 font-medium text-gray-900 border-2 border-orange-200"
+              />
+            </div>
+            <button
+              @click="handleSend"
+              :disabled="!input.trim()"
+              class="p-2 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all"
+            >
+              <Send :size="20" />
+            </button>
           </div>
-          <button
-            @click="handleSend"
-            :disabled="!input.trim()"
-            class="p-2 bg-primary-600 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Send :size="20" />
-          </button>
         </div>
       </div>
     </div>
@@ -69,7 +78,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
-import { Send, Mic, Camera, Sparkles } from 'lucide-vue-next'
+import { Sparkles, Camera, Mic, Send } from 'lucide-vue-next'
 import type { ChatMessage, Recipe } from '../types'
 import { mockRecipes } from '../data/recipes'
 import RecipeCard from '../components/RecipeCard.vue'
@@ -118,7 +127,7 @@ const handleSend = () => {
     }
     messages.value.push(assistantMessage)
     scrollToBottom()
-  }, 1000)
+  }, 800)
 }
 
 const getRecommendations = (query: string): Recipe[] => {
@@ -133,13 +142,9 @@ const getRecommendations = (query: string): Recipe[] => {
   }
 
   // 餐別篩選
-  if (lowerQuery.includes('早餐')) {
-    filtered = filtered.filter(r => r.category === '早餐')
-  } else if (lowerQuery.includes('午餐')) {
-    filtered = filtered.filter(r => r.category === '午餐')
-  } else if (lowerQuery.includes('晚餐')) {
-    filtered = filtered.filter(r => r.category === '晚餐')
-  }
+  if (lowerQuery.includes('早餐')) filtered = filtered.filter(r => r.category === '早餐')
+  else if (lowerQuery.includes('午餐')) filtered = filtered.filter(r => r.category === '午餐')
+  else if (lowerQuery.includes('晚餐')) filtered = filtered.filter(r => r.category === '晚餐')
 
   // 食材篩選
   const ingredients = ['蛋', '雞蛋', '青菜', '番茄', '雞肉', '豆腐', '泡菜']

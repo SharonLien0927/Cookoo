@@ -103,13 +103,34 @@
             <div
               v-for="(ing, idx) in form.ingredients"
               :key="idx"
-              class="flex items-center gap-2 bg-orange-50 p-3 rounded-xl border border-orange-200 group"
+              draggable="true"
+              @dragstart="dragStartIndex = idx; dragType = 'ingredient'"
+              @dragover.prevent
+              @drop="dropItem(idx, 'ingredient')"
+              @dragend="dragStartIndex = -1"
+              class="flex items-center gap-2 bg-orange-50 p-3 rounded-xl border border-orange-200 group cursor-grab active:cursor-grabbing hover:bg-orange-100 transition-colors"
             >
-              <span class="flex-1 font-medium text-gray-700">• {{ ing.name }} <span class="text-orange-600 font-semibold">{{ ing.quantity }}</span></span>
+              <span class="flex-shrink-0 text-gray-400 font-bold">⋮⋮</span>
+              <div v-if="editingIngredientIdx === idx" class="flex-1 flex gap-2">
+                <input
+                  v-model="ing.name"
+                  @blur="editingIngredientIdx = -1"
+                  @keydown.enter="editingIngredientIdx = -1"
+                  class="flex-1 px-2 py-1 text-sm border-2 border-orange-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  autofocus
+                />
+                <input
+                  v-model="ing.quantity"
+                  @blur="editingIngredientIdx = -1"
+                  @keydown.enter="editingIngredientIdx = -1"
+                  class="w-20 px-2 py-1 text-sm border-2 border-orange-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <span v-else @click="editingIngredientIdx = idx" class="flex-1 font-medium text-gray-700 cursor-text">• {{ ing.name }} <span class="text-orange-600 font-semibold">{{ ing.quantity }}</span></span>
               <button
                 type="button"
                 @click="removeIngredient(idx)"
-                class="text-red-500 hover:text-red-700 font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                class="text-red-500 hover:text-red-700 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
               >
                 ✕
               </button>
@@ -119,17 +140,17 @@
             <input
               v-model="newIngredient.name"
               placeholder="食材名稱"
-              class="flex-1 px-3 py-2 text-sm border-2 border-orange-200 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-400"
+              class="flex-1 min-w-0 px-3 py-2 text-sm border-2 border-orange-200 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
             <input
               v-model="newIngredient.quantity"
               placeholder="數量"
-              class="px-3 py-2 text-sm border-2 border-orange-200 rounded-full w-24 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              class="px-3 py-2 text-sm border-2 border-orange-200 rounded-full w-24 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
             <button
               type="button"
               @click="addIngredient"
-              class="px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-500 text-white text-sm rounded-full font-semibold shadow-md hover:shadow-lg transition-all"
+              class="px-4 py-2 bg-gradient-to-r from-orange-400 to-orange-500 text-white text-sm rounded-full font-semibold shadow-md hover:shadow-lg transition-all flex-shrink-0"
             >
               新增
             </button>
@@ -143,12 +164,27 @@
             <div
               v-for="(step, idx) in form.steps"
               :key="idx"
-              class="flex items-start gap-2 bg-orange-50 p-3 rounded-xl border border-orange-200 group"
+              draggable="true"
+              @dragstart="dragStartIndex = idx; dragType = 'step'"
+              @dragover.prevent
+              @drop="dropItem(idx, 'step')"
+              @dragend="dragStartIndex = -1"
+              class="flex items-start gap-2 bg-orange-50 p-3 rounded-xl border border-orange-200 group cursor-grab active:cursor-grabbing hover:bg-orange-100 transition-colors"
             >
               <span class="flex-shrink-0 w-6 h-6 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                 {{ idx + 1 }}
               </span>
-              <span class="flex-1 text-sm text-gray-700 font-medium">{{ step }}</span>
+              <div v-if="editingStepIdx === idx" class="flex-1">
+                <textarea
+                  v-model="form.steps[idx]"
+                  @blur="editingStepIdx = -1"
+                  @keydown.enter.meta="editingStepIdx = -1"
+                  rows="3"
+                  class="w-full px-2 py-1 text-sm border-2 border-orange-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  autofocus
+                ></textarea>
+              </div>
+              <span v-else @click="editingStepIdx = idx" class="flex-1 text-sm text-gray-700 font-medium cursor-text leading-relaxed">{{ step }}</span>
               <button
                 type="button"
                 @click="removeStep(idx)"
@@ -226,6 +262,10 @@ const form = ref<Partial<Recipe>>({
 const mealCategories = ref<string[]>([])
 const newIngredient = ref({ name: '', quantity: '' })
 const newStep = ref('')
+const editingIngredientIdx = ref(-1)
+const editingStepIdx = ref(-1)
+const dragStartIndex = ref(-1)
+const dragType = ref<'ingredient' | 'step'>('ingredient')
 
 if (isEdit) {
   const item = recipeStore.getById(id)
@@ -288,6 +328,25 @@ const removeStep = (idx: number) => {
   form.value.steps = steps
 }
 
+const dropItem = (targetIdx: number, type: 'ingredient' | 'step') => {
+  if (dragStartIndex.value === -1 || dragType.value !== type) return
+  
+  const startIdx = dragStartIndex.value
+  if (startIdx === targetIdx) return
+
+  if (type === 'ingredient') {
+    const ings = form.value.ingredients || []
+    const [item] = ings.splice(startIdx, 1)
+    ings.splice(targetIdx, 0, item)
+    form.value.ingredients = ings
+  } else if (type === 'step') {
+    const steps = form.value.steps || []
+    const [item] = steps.splice(startIdx, 1)
+    steps.splice(targetIdx, 0, item)
+    form.value.steps = steps
+  }
+}
+
 const onFileChange = (e: Event) => {
   const input = e.target as HTMLInputElement
   if (!input.files || input.files.length === 0) return
@@ -311,6 +370,7 @@ const onSave = () => {
   if (isEdit && id) {
     // 更新現有食譜
     recipeStore.update(id, form.value)
+    router.push(`/recipes/${id}`)
   } else {
     // 新增食譜
     const newRecipe: Recipe = {
@@ -327,9 +387,9 @@ const onSave = () => {
       isFavorite: false,
     }
     recipeStore.add(newRecipe)
+    // 直接導向新食譜的詳細頁
+    router.push(`/recipes/${newRecipe.id}`)
   }
-
-  router.push('/recipes')
 }
 
 const onCancel = () => {

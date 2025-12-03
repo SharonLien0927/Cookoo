@@ -16,10 +16,17 @@
             class="w-full h-64 object-cover"
           />
           <button
-            @click="router.back()"
+            @click="router.push('/recipes')"
             class="absolute top-4 left-4 p-3 bg-white rounded-full shadow-md hover:shadow-lg transition-all border-2 border-orange-200"
           >
             <ArrowLeft :size="20" class="text-gray-900" />
+          </button>
+          <button
+            @click="router.push(`/recipes/${recipe.id}/edit`)"
+            class="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all border-2 border-orange-200 text-xs font-semibold text-gray-700"
+            title="編輯食譜"
+          >
+            編輯
           </button>
         </div>
       </div>
@@ -104,6 +111,11 @@ import { recipeStore } from '../stores/recipeStore'
 
 const route = useRoute()
 const router = useRouter()
+
+// 滾動到頂部
+onMounted(() => {
+  window.scrollTo(0, 0)
+})
 
 const recipe = computed(() => {
   const id = route.params.id as string

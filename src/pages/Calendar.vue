@@ -92,6 +92,13 @@
             >
               <span class="text-xs text-orange-600 font-semibold w-12 bg-orange-100 px-2 py-1 rounded-full">{{ item.mealType }}</span>
               <span class="flex-1 text-gray-900 font-medium">{{ getRecipeName(item.recipeId) }}</span>
+              <button
+                @click="removeScheduled(selectedDate, item.recipeId)"
+                class="ml-2 px-3 py-1 rounded-full text-sm bg-white border-2 border-red-200 text-red-600 hover:bg-red-50"
+                title="移除"
+              >
+                刪除
+              </button>
             </div>
           </div>
           <p v-else class="text-gray-500 text-sm">這天還沒有安排菜單</p>
@@ -115,7 +122,15 @@
 
       <!-- 篩選結果：使用者可選擇要加入哪個食譜到選中日期 -->
       <div v-if="menuFilterResults && menuFilterResults.length > 0" class="mt-4 bg-white rounded-3xl p-4 border-2 border-orange-200 shadow-md">
-        <h3 class="font-bold mb-3 text-gray-900">符合的食譜（點擊加入至選中日期）</h3>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-gray-900">符合的食譜（點擊加入至選中日期）</h3>
+          <button
+            @click="menuFilterResults = null"
+            class="px-3 py-1 rounded-full text-sm bg-white border-2 border-orange-200 text-orange-600 hover:bg-orange-50 font-medium"
+          >
+            取消篩選
+          </button>
+        </div>
         <div class="space-y-3">
           <div v-for="res in menuFilterResults" :key="res.id" class="flex items-center justify-between p-3 rounded-xl bg-orange-50 border border-orange-200">
             <div class="flex-1">
@@ -133,6 +148,16 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <div v-else-if="menuFilterResults && menuFilterResults.length === 0" class="mt-4 bg-white rounded-3xl p-4 border-2 border-orange-200 shadow-md text-center text-gray-600">
+        <p class="font-medium">目前沒有符合條件的食譜</p>
+        <button
+          @click="menuFilterResults = null"
+          class="mt-3 px-4 py-2 rounded-full text-sm bg-orange-100 border-2 border-orange-200 text-orange-600 hover:bg-orange-50 font-medium"
+        >
+          取消篩選
+        </button>
       </div>
     </div>
   </div>
@@ -247,6 +272,11 @@ const addRecipeToSelectedDate = (recipeId: string, mealType: string) => {
   // clear temp results
   menuFilterResults.value = null
   showMenuFilter.value = false
+}
+
+const removeScheduled = (dateStr: string | null, recipeId: string) => {
+  if (!dateStr) return
+  calendarStore.removeFromDate(dateStr, recipeId)
 }
 
 const exportShoppingList = () => {
