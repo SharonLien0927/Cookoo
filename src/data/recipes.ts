@@ -42,6 +42,7 @@ export const mockRecipes: Recipe[] = [
       '加入煮好的麵條拌炒',
       '調味即可',
     ],
+    tips: '蒜片要小火慢爆香，才不會焦苦',
     isFavorite: false,
   },
   {
@@ -64,8 +65,8 @@ export const mockRecipes: Recipe[] = [
       '倒入醬汁煮滾，淋上蛋液',
       '蓋鍋蓋至蛋半熟，盛在飯上',
     ],
+    tips: '蛋液要慢慢淋下，蓋鍋蓋受熱均勻',
     isFavorite: false,
-  },
   {
     id: '4',
     name: '韓式泡菜炒飯',
@@ -85,8 +86,9 @@ export const mockRecipes: Recipe[] = [
       '加入白飯炒散',
       '加入炒蛋拌勻即可',
     ],
+    tips: '泡菜的湯汁也要倒入，增加香味',
     isFavorite: false,
-  },
+  },isFavorite: false,
   {
     id: '5',
     name: '麻婆豆腐',
@@ -106,8 +108,8 @@ export const mockRecipes: Recipe[] = [
       '加入豆腐輕輕拌炒',
       '加水煮滾，勾芡即可',
     ],
+    tips: '豆腐要輕輕拌，才不會碎掉',
     isFavorite: false,
-  },
   {
     id: '6',
     name: '日式蛋包飯',
@@ -127,6 +129,9 @@ export const mockRecipes: Recipe[] = [
       '將炒飯包在蛋皮中',
       '淋上番茄醬即可',
     ],
+    tips: '蛋皮要煎得薄而不破，火候很重要',
+    isFavorite: false,
+  },],
     isFavorite: false,
   },
 ];
