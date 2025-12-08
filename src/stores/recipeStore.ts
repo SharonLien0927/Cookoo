@@ -78,25 +78,34 @@ const initializeFromFirestore = async () => {
     const q = query(collection(db, COLLECTION_NAME))
     const snapshot = await getDocs(q)
     
-    if (snapshot.empty) {
+    // Always check if we need to seed mock recipes
+    // Seed if empty OR if we have fewer recipes than mockRecipes
+    const shouldSeed = snapshot.empty || snapshot.size < mockRecipes.length
+    
+    if (shouldSeed) {
       console.log('Seeding Firestore with mock recipes...')
+      
+      // If not empty, delete existing docs first to avoid duplicates
+      if (!snapshot.empty) {
+        for (const doc of snapshot.docs) {
+          // Only delete if it looks like a mock recipe (not user-added)
+          await deleteDoc(doc.ref)
+        }
+      }
+      
+      // Add all mock recipes
       for (const recipe of mockRecipes) {
         await addDoc(collection(db, COLLECTION_NAME), recipeToDoc(recipe))
       }
-      // After seeding, set up listener (which will load seeded data)
-      firestoreReady = true
-      unsubscribe = onSnapshot(q, (snapshot) => {
-        recipesRef.value = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
-        save(recipesRef.value)
-      })
-    } else {
-      firestoreReady = true
-      // Set up real-time listener - it will provide initial data + future updates
-      unsubscribe = onSnapshot(q, (snapshot) => {
-        recipesRef.value = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
-        save(recipesRef.value)
-      })
     }
+    
+    firestoreReady = true
+    
+    // Set up real-time listener - it will provide initial data + future updates
+    unsubscribe = onSnapshot(q, (snapshot) => {
+      recipesRef.value = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
+      save(recipesRef.value)
+    })
     
     console.log('Firestore initialized successfully')
   } catch (error) {
