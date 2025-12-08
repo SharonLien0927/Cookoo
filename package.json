@@ -10,10 +10,11 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "vue": "^3.4.15",
-    "vue-router": "^4.2.5",
+    "date-fns": "^2.30.0",
+    "firebase": "^12.6.0",
     "lucide-vue-next": "^0.309.0",
-    "date-fns": "^2.30.0"
+    "vue": "^3.4.15",
+    "vue-router": "^4.2.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.3",
@@ -26,4 +27,3 @@
     "vue-tsc": "^1.8.27"
   }
 }
-
