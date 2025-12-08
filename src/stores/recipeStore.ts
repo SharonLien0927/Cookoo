@@ -121,29 +121,28 @@ export const recipeStore = {
   },
 
   async add(recipe: Recipe) {
-    // Always add to local state first
-    this.recipes.value.push(recipe)
-    save(this.recipes.value)
-    
-    // Try to sync to Firestore if ready
+    // If Firestore is ready, add directly to Firestore first to get the ID
     if (firestoreReady) {
       try {
         const docRef = await addDoc(collection(db, COLLECTION_NAME), recipeToDoc(recipe))
-        const index = this.recipes.value.findIndex(r => r.id === recipe.id)
-        if (index >= 0) {
-          // Update to use Firestore's ID
-          this.recipes.value[index].id = docRef.id
-          save(this.recipes.value)
-          // Return recipe with updated Firestore ID
-          return { ...recipe, id: docRef.id }
-        }
+        const recipeWithFirestoreId = { ...recipe, id: docRef.id }
+        // Update local state with Firestore ID
+        this.recipes.value.push(recipeWithFirestoreId)
+        save(this.recipes.value)
+        return recipeWithFirestoreId
       } catch (error) {
-        console.error('Failed to sync add to Firestore:', error)
+        console.error('Failed to add recipe to Firestore:', error)
+        // Fall back to local-only if Firestore fails
+        this.recipes.value.push(recipe)
+        save(this.recipes.value)
+        return recipe
       }
+    } else {
+      // Firestore not ready yet, use local ID and sync later
+      this.recipes.value.push(recipe)
+      save(this.recipes.value)
+      return recipe
     }
-    
-    // Return with local ID if Firestore not ready or failed
-    return recipe
   },
 
   async update(id: string, recipe: Partial<Recipe>) {
