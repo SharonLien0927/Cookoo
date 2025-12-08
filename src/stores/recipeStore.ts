@@ -78,23 +78,18 @@ const initializeFromFirestore = async () => {
     const q = query(collection(db, COLLECTION_NAME))
     const snapshot = await getDocs(q)
     
-    // Always check if we need to seed mock recipes
-    // Seed if empty OR if we have fewer recipes than mockRecipes
-    const shouldSeed = snapshot.empty || snapshot.size < mockRecipes.length
+    const existingRecipes = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
+    const mockRecipeNames = mockRecipes.map(r => r.name)
     
-    if (shouldSeed) {
-      console.log('Seeding Firestore with mock recipes...')
-      
-      // If not empty, delete existing docs first to avoid duplicates
-      if (!snapshot.empty) {
-        for (const doc of snapshot.docs) {
-          // Only delete if it looks like a mock recipe (not user-added)
-          await deleteDoc(doc.ref)
-        }
-      }
-      
-      // Add all mock recipes
-      for (const recipe of mockRecipes) {
+    // Check which mock recipes are missing
+    const missingMockRecipes = mockRecipes.filter(
+      mr => !existingRecipes.some(er => er.name === mr.name)
+    )
+    
+    // Add missing mock recipes only (don't delete user-added ones)
+    if (missingMockRecipes.length > 0) {
+      console.log(`Adding ${missingMockRecipes.length} missing mock recipes to Firestore...`)
+      for (const recipe of missingMockRecipes) {
         await addDoc(collection(db, COLLECTION_NAME), recipeToDoc(recipe))
       }
     }
