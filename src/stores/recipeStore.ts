@@ -131,14 +131,18 @@ export const recipeStore = {
         const docRef = await addDoc(collection(db, COLLECTION_NAME), recipeToDoc(recipe))
         const index = this.recipes.value.findIndex(r => r.id === recipe.id)
         if (index >= 0) {
+          // Update to use Firestore's ID
           this.recipes.value[index].id = docRef.id
           save(this.recipes.value)
+          // Return recipe with updated Firestore ID
+          return { ...recipe, id: docRef.id }
         }
       } catch (error) {
         console.error('Failed to sync add to Firestore:', error)
       }
     }
     
+    // Return with local ID if Firestore not ready or failed
     return recipe
   },
 
