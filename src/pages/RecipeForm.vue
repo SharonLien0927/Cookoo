@@ -358,7 +358,7 @@ const onFileChange = (e: Event) => {
   reader.readAsDataURL(file)
 }
 
-const onSave = () => {
+const onSave = async () => {
   if (!form.value.name || mealCategories.value.length === 0) {
     alert('請填寫食譜名稱和至少選一個餐別')
     return
@@ -369,7 +369,7 @@ const onSave = () => {
 
   if (isEdit && id) {
     // 更新現有食譜
-    recipeStore.update(id, form.value)
+    await recipeStore.update(id, form.value)
     router.push(`/recipes/${id}`)
   } else {
     // 新增食譜
@@ -386,9 +386,9 @@ const onSave = () => {
       tips: form.value.tips || '',
       isFavorite: false,
     }
-    recipeStore.add(newRecipe)
-    // 直接導向新食譜的詳細頁
-    router.push(`/recipes/${newRecipe.id}`)
+    const savedRecipe = await recipeStore.add(newRecipe)
+    // 使用 Firestore 返回的正確 ID 導向詳細頁
+    router.push(`/recipes/${savedRecipe.id}`)
   }
 }
 
