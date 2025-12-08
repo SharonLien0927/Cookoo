@@ -83,20 +83,20 @@ const initializeFromFirestore = async () => {
       for (const recipe of mockRecipes) {
         await addDoc(collection(db, COLLECTION_NAME), recipeToDoc(recipe))
       }
-      // Reload after seeding
-      const seedSnapshot = await getDocs(q)
-      recipesRef.value = seedSnapshot.docs.map(d => docToRecipe(d.id, d.data()))
+      // After seeding, set up listener (which will load seeded data)
+      firestoreReady = true
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        recipesRef.value = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
+        save(recipesRef.value)
+      })
     } else {
-      recipesRef.value = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
+      firestoreReady = true
+      // Set up real-time listener - it will provide initial data + future updates
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        recipesRef.value = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
+        save(recipesRef.value)
+      })
     }
-    save(recipesRef.value)
-    firestoreReady = true
-    
-    // Set up real-time listener for future changes (only after ready)
-    unsubscribe = onSnapshot(q, (snapshot) => {
-      recipesRef.value = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
-      save(recipesRef.value)
-    })
     
     console.log('Firestore initialized successfully')
   } catch (error) {
@@ -121,14 +121,14 @@ export const recipeStore = {
   },
 
   async add(recipe: Recipe) {
-    // If Firestore is ready, add directly to Firestore first to get the ID
+    // If Firestore is ready, add directly to Firestore
+    // The onSnapshot listener will automatically update local state
     if (firestoreReady) {
       try {
         const docRef = await addDoc(collection(db, COLLECTION_NAME), recipeToDoc(recipe))
         const recipeWithFirestoreId = { ...recipe, id: docRef.id }
-        // Update local state with Firestore ID
-        this.recipes.value.push(recipeWithFirestoreId)
-        save(this.recipes.value)
+        // Return the recipe with Firestore ID for navigation
+        // Don't manually push to recipes.value - let the listener handle it
         return recipeWithFirestoreId
       } catch (error) {
         console.error('Failed to add recipe to Firestore:', error)
@@ -138,7 +138,7 @@ export const recipeStore = {
         return recipe
       }
     } else {
-      // Firestore not ready yet, use local ID and sync later
+      // Firestore not ready yet, use local storage
       this.recipes.value.push(recipe)
       save(this.recipes.value)
       return recipe
