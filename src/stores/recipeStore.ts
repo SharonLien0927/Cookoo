@@ -75,36 +75,48 @@ const recipeToDoc = (recipe: Recipe) => {
 // Initialize Firestore connection asynchronously
 const initializeFromFirestore = async () => {
   try {
+    console.log('Starting Firestore initialization...')
     const q = query(collection(db, COLLECTION_NAME))
     const snapshot = await getDocs(q)
     
+    console.log(`Found ${snapshot.size} recipes in Firestore`)
     const existingRecipes = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
-    const mockRecipeNames = mockRecipes.map(r => r.name)
+    console.log('Existing recipe names:', existingRecipes.map(r => r.name))
     
     // Check which mock recipes are missing
     const missingMockRecipes = mockRecipes.filter(
       mr => !existingRecipes.some(er => er.name === mr.name)
     )
     
+    console.log('Missing mock recipes:', missingMockRecipes.map(r => r.name))
+    
     // Add missing mock recipes only (don't delete user-added ones)
     if (missingMockRecipes.length > 0) {
       console.log(`Adding ${missingMockRecipes.length} missing mock recipes to Firestore...`)
       for (const recipe of missingMockRecipes) {
-        await addDoc(collection(db, COLLECTION_NAME), recipeToDoc(recipe))
+        try {
+          const docRef = await addDoc(collection(db, COLLECTION_NAME), recipeToDoc(recipe))
+          console.log(`✓ Added "${recipe.name}" with ID: ${docRef.id}`)
+        } catch (addError) {
+          console.error(`✗ Failed to add "${recipe.name}":`, addError)
+        }
       }
+    } else {
+      console.log('All mock recipes already exist in Firestore')
     }
     
     firestoreReady = true
     
     // Set up real-time listener - it will provide initial data + future updates
     unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log(`Listener: ${snapshot.size} recipes in Firestore`)
       recipesRef.value = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
       save(recipesRef.value)
     })
     
-    console.log('Firestore initialized successfully')
+    console.log('✓ Firestore initialized successfully')
   } catch (error) {
-    console.error('Failed to initialize Firestore:', error)
+    console.error('✗ Failed to initialize Firestore:', error)
     firestoreReady = false
   }
 }
