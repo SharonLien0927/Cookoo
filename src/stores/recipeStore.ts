@@ -93,21 +93,23 @@ const seedMockRecipes = async () => {
     
     console.log(`📊 Found ${snapshot.size} existing recipes:`, Array.from(existingNames))
     
-    // Add each mock recipe if it doesn't exist
-    let addedCount = 0
-    for (const mockRecipe of mockRecipes) {
+    // 同步寫入每筆 mock 食譜（使用 setTimeout 避免速率限制）
+    for (let i = 0; i < mockRecipes.length; i++) {
+      const mockRecipe = mockRecipes[i]
       if (!existingNames.has(mockRecipe.name)) {
         try {
+          // 延遲寫入，避免 Firestore 速率限制
+          await new Promise(resolve => setTimeout(resolve, 300))
+          
           const docRef = await addDoc(collection(db, COLLECTION_NAME), recipeToDoc(mockRecipe))
-          console.log(`✅ Added "${mockRecipe.name}"`)
-          addedCount++
+          console.log(`✅ Added "${mockRecipe.name}" with ID: ${docRef.id}`)
         } catch (e) {
           console.error(`❌ Error adding "${mockRecipe.name}":`, e)
         }
       }
     }
     
-    console.log(`✨ Seeding complete! Added ${addedCount} new recipes`)
+    console.log(`✨ Seeding complete!`)
     firestoreReady = true
     
     // Set up listener AFTER seeding
