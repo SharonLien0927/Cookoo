@@ -45,6 +45,9 @@ const docToRecipe = (docId: string, data: any): Recipe => {
   const imagePath = `Img/${recipeName}.jpeg`
   const fullImagePath = import.meta.env.BASE_URL + imagePath
   
+  // 找到對應的 mockRecipe 以獲取完整的 ingredients 和 steps
+  const mockRecipe = mockRecipes.find(r => r.name === recipeName)
+  
   return {
     id: docId,
     name: recipeName,
@@ -53,8 +56,8 @@ const docToRecipe = (docId: string, data: any): Recipe => {
     difficulty: data.difficulty || '簡單',
     category: data.category || '晚餐',
     tags: data.tags || [],
-    ingredients: data.ingredients || [],
-    steps: data.steps || [],
+    ingredients: mockRecipe?.ingredients || [],
+    steps: mockRecipe?.steps || [],
     tips: data.tips || '',
     isFavorite: data.isFavorite || false
   }
@@ -62,17 +65,15 @@ const docToRecipe = (docId: string, data: any): Recipe => {
 
 // Firestore helper to convert Recipe to storable doc
 const recipeToDoc = (recipe: Recipe) => {
-  // 只保存基本資料，不保存 image 路徑（避免序列化問題）
+  // 只保存基本資料，簡化複雜物件避免序列化錯誤
   return {
     name: recipe.name,
     time: recipe.time,
     difficulty: recipe.difficulty,
     category: recipe.category,
-    tags: recipe.tags,
-    ingredients: recipe.ingredients,
-    steps: recipe.steps,
+    tags: recipe.tags || [],
     tips: typeof recipe.tips === 'string' ? recipe.tips : '',
-    isFavorite: recipe.isFavorite,
+    isFavorite: recipe.isFavorite || false,
     updatedAt: new Date()
   }
 }
