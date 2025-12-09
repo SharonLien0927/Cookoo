@@ -71,7 +71,7 @@ const recipeToDoc = (recipe: Recipe) => {
     tags: recipe.tags,
     ingredients: recipe.ingredients,
     steps: recipe.steps,
-    tips: recipe.tips,
+    tips: typeof recipe.tips === 'string' ? recipe.tips : '',
     isFavorite: recipe.isFavorite,
     updatedAt: new Date()
   }

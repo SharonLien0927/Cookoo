@@ -67,6 +67,7 @@ export const mockRecipes: Recipe[] = [
     ],
     tips: '蛋液要慢慢淋下，蓋鍋蓋受熱均勻',
     isFavorite: false,
+  },
   {
     id: '4',
     name: '韓式泡菜炒飯',
@@ -88,7 +89,7 @@ export const mockRecipes: Recipe[] = [
     ],
     tips: '泡菜的湯汁也要倒入，增加香味',
     isFavorite: false,
-  },isFavorite: false,
+  },
   {
     id: '5',
     name: '麻婆豆腐',
@@ -110,6 +111,7 @@ export const mockRecipes: Recipe[] = [
     ],
     tips: '豆腐要輕輕拌，才不會碎掉',
     isFavorite: false,
+  },
   {
     id: '6',
     name: '日式蛋包飯',
@@ -130,8 +132,6 @@ export const mockRecipes: Recipe[] = [
       '淋上番茄醬即可',
     ],
     tips: '蛋皮要煎得薄而不破，火候很重要',
-    isFavorite: false,
-  },],
     isFavorite: false,
   },
 ];
