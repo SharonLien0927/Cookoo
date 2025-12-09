@@ -38,7 +38,54 @@ const recipesRef = ref<Recipe[]>(load())
 let firestoreReady = false
 let unsubscribe: (() => void) | null = null
 
-// Firestore helper to convert Firestore doc to Recipe
+// Flag to prevent multiple initialization attempts
+let initializationStarted = false
+
+// Direct seed of mock recipes - ensures they always exist
+const seedMockRecipes = async () => {
+  if (initializationStarted) return
+  initializationStarted = true
+  
+  try {
+    console.log('🌱 Starting mock recipe seed...')
+    
+    // Get all existing recipes
+    const q = query(collection(db, COLLECTION_NAME))
+    const snapshot = await getDocs(q)
+    const existingNames = new Set(snapshot.docs.map(d => d.data().name))
+    
+    console.log(`📊 Found ${snapshot.size} existing recipes:`, Array.from(existingNames))
+    
+    // Add each mock recipe if it doesn't exist
+    let addedCount = 0
+    for (const mockRecipe of mockRecipes) {
+      if (!existingNames.has(mockRecipe.name)) {
+        try {
+          const docRef = await addDoc(collection(db, COLLECTION_NAME), recipeToDoc(mockRecipe))
+          console.log(`✅ Added "${mockRecipe.name}"`)
+          addedCount++
+        } catch (e) {
+          console.error(`❌ Error adding "${mockRecipe.name}":`, e)
+        }
+      }
+    }
+    
+    console.log(`✨ Seeding complete! Added ${addedCount} new recipes`)
+    firestoreReady = true
+    
+    // Set up listener AFTER seeding
+    unsubscribe = onSnapshot(q, (snapshot) => {
+      recipesRef.value = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
+      console.log(`📲 Updated: ${recipesRef.value.length} recipes`)
+      save(recipesRef.value)
+    })
+  } catch (error) {
+    console.error('❌ Seed failed:', error)
+  }
+}
+
+// Start seeding immediately
+seedMockRecipes()
 const docToRecipe = (docId: string, data: any): Recipe => {
   return {
     id: docId,
@@ -71,61 +118,6 @@ const recipeToDoc = (recipe: Recipe) => {
     updatedAt: new Date()
   }
 }
-
-// Initialize Firestore connection asynchronously
-const initializeFromFirestore = async () => {
-  try {
-    console.log('🔄 Starting Firestore initialization...')
-    const q = query(collection(db, COLLECTION_NAME))
-    const snapshot = await getDocs(q)
-    
-    console.log(`📊 Found ${snapshot.size} recipes in Firestore`)
-    const existingRecipes = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
-    console.log('📝 Existing recipe names:', existingRecipes.map(r => r.name))
-    
-    // Check which mock recipes are missing
-    const missingMockRecipes = mockRecipes.filter(
-      mr => !existingRecipes.some(er => er.name === mr.name)
-    )
-    
-    console.log('❓ Missing mock recipes:', missingMockRecipes.map(r => r.name))
-    
-    // Add missing mock recipes only (don't delete user-added ones)
-    if (missingMockRecipes.length > 0) {
-      console.log(`➕ Adding ${missingMockRecipes.length} missing mock recipes to Firestore...`)
-      for (const recipe of missingMockRecipes) {
-        try {
-          const recipeData = recipeToDoc(recipe)
-          console.log(`  Adding "${recipe.name}" with data:`, recipeData)
-          const docRef = await addDoc(collection(db, COLLECTION_NAME), recipeData)
-          console.log(`  ✅ Added "${recipe.name}" with ID: ${docRef.id}`)
-        } catch (addError) {
-          console.error(`  ❌ Failed to add "${recipe.name}":`, addError)
-        }
-      }
-    } else {
-      console.log('✅ All mock recipes already exist in Firestore')
-    }
-    
-    firestoreReady = true
-    
-    // Set up real-time listener - it will provide initial data + future updates
-    unsubscribe = onSnapshot(q, (snapshot) => {
-      console.log(`🔔 Listener: ${snapshot.size} recipes in Firestore`)
-      recipesRef.value = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
-      console.log('📲 Updated local recipes:', recipesRef.value.map(r => r.name))
-      save(recipesRef.value)
-    })
-    
-    console.log('✅ Firestore initialized successfully')
-  } catch (error) {
-    console.error('❌ Failed to initialize Firestore:', error)
-    firestoreReady = false
-  }
-}
-
-// Start initialization (non-blocking)
-initializeFromFirestore()
 
 export const recipeStore = {
   recipes: recipesRef,
