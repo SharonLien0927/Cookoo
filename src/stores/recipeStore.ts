@@ -38,6 +38,40 @@ const recipesRef = ref<Recipe[]>(load())
 let firestoreReady = false
 let unsubscribe: (() => void) | null = null
 
+// Firestore helper to convert Firestore doc to Recipe
+const docToRecipe = (docId: string, data: any): Recipe => {
+  return {
+    id: docId,
+    name: data.name || '',
+    image: data.image || '',
+    time: data.time || 15,
+    difficulty: data.difficulty || '簡單',
+    category: data.category || '晚餐',
+    tags: data.tags || [],
+    ingredients: data.ingredients || [],
+    steps: data.steps || [],
+    tips: data.tips || '',
+    isFavorite: data.isFavorite || false
+  }
+}
+
+// Firestore helper to convert Recipe to storable doc
+const recipeToDoc = (recipe: Recipe) => {
+  return {
+    name: recipe.name,
+    image: recipe.image,
+    time: recipe.time,
+    difficulty: recipe.difficulty,
+    category: recipe.category,
+    tags: recipe.tags,
+    ingredients: recipe.ingredients,
+    steps: recipe.steps,
+    tips: recipe.tips,
+    isFavorite: recipe.isFavorite,
+    updatedAt: new Date()
+  }
+}
+
 // Flag to prevent multiple initialization attempts
 let initializationStarted = false
 
@@ -74,7 +108,8 @@ const seedMockRecipes = async () => {
     firestoreReady = true
     
     // Set up listener AFTER seeding
-    unsubscribe = onSnapshot(q, (snapshot) => {
+    const q2 = query(collection(db, COLLECTION_NAME))
+    unsubscribe = onSnapshot(q2, (snapshot) => {
       recipesRef.value = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
       console.log(`📲 Updated: ${recipesRef.value.length} recipes`)
       save(recipesRef.value)
@@ -86,38 +121,6 @@ const seedMockRecipes = async () => {
 
 // Start seeding immediately
 seedMockRecipes()
-const docToRecipe = (docId: string, data: any): Recipe => {
-  return {
-    id: docId,
-    name: data.name || '',
-    image: data.image || '',
-    time: data.time || 15,
-    difficulty: data.difficulty || '簡單',
-    category: data.category || '晚餐',
-    tags: data.tags || [],
-    ingredients: data.ingredients || [],
-    steps: data.steps || [],
-    tips: data.tips || '',
-    isFavorite: data.isFavorite || false
-  }
-}
-
-// Firestore helper to convert Recipe to storable doc
-const recipeToDoc = (recipe: Recipe) => {
-  return {
-    name: recipe.name,
-    image: recipe.image,
-    time: recipe.time,
-    difficulty: recipe.difficulty,
-    category: recipe.category,
-    tags: recipe.tags,
-    ingredients: recipe.ingredients,
-    steps: recipe.steps,
-    tips: recipe.tips,
-    isFavorite: recipe.isFavorite,
-    updatedAt: new Date()
-  }
-}
 
 export const recipeStore = {
   recipes: recipesRef,
