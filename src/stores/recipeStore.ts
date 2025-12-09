@@ -40,15 +40,14 @@ let unsubscribe: (() => void) | null = null
 
 // Firestore helper to convert Firestore doc to Recipe
 const docToRecipe = (docId: string, data: any): Recipe => {
-  // Reconstruct image path from stored filename
-  const imagePath = data.image || ''
-  const fullImagePath = imagePath.startsWith('/') || imagePath.startsWith('http') 
-    ? imagePath 
-    : import.meta.env.BASE_URL + imagePath
+  // Reconstruct image path from recipe name
+  const recipeName = data.name || ''
+  const imagePath = `Img/${recipeName}.jpeg`
+  const fullImagePath = import.meta.env.BASE_URL + imagePath
   
   return {
     id: docId,
-    name: data.name || '',
+    name: recipeName,
     image: fullImagePath,
     time: data.time || 15,
     difficulty: data.difficulty || '簡單',
@@ -63,17 +62,9 @@ const docToRecipe = (docId: string, data: any): Recipe => {
 
 // Firestore helper to convert Recipe to storable doc
 const recipeToDoc = (recipe: Recipe) => {
-  // Store only relative image path, not the full URL
-  let imageName = recipe.image
-  if (imageName.includes('Img/')) {
-    // Extract just the relative path "Img/filename.jpeg"
-    const match = imageName.match(/Img\/[^'"]*)
-    imageName = match ? match[0] : imageName
-  }
-  
+  // 只保存基本資料，不保存 image 路徑（避免序列化問題）
   return {
     name: recipe.name,
-    image: imageName,
     time: recipe.time,
     difficulty: recipe.difficulty,
     category: recipe.category,
