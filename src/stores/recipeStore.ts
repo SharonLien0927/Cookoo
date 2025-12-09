@@ -40,39 +40,36 @@ let unsubscribe: (() => void) | null = null
 
 // Firestore helper to convert Firestore doc to Recipe
 const docToRecipe = (docId: string, data: any): Recipe => {
-  // Reconstruct image path from recipe name
   const recipeName = data.name || ''
-  const imagePath = `Img/${recipeName}.jpeg`
-  const fullImagePath = import.meta.env.BASE_URL + imagePath
   
-  // 找到對應的 mockRecipe 以獲取完整的 ingredients 和 steps
+  // 完全從 mockRecipes 獲取食譜資料，Firestore 只作為名單確認
   const mockRecipe = mockRecipes.find(r => r.name === recipeName)
   
+  if (mockRecipe) {
+    return { ...mockRecipe, id: docId }
+  }
+  
+  // 備用：如果在 mockRecipes 找不到，返回空食譜
   return {
     id: docId,
     name: recipeName,
-    image: fullImagePath,
-    time: data.time || 15,
-    difficulty: data.difficulty || '簡單',
-    category: data.category || '晚餐',
-    tags: data.tags || [],
-    ingredients: mockRecipe?.ingredients || [],
-    steps: mockRecipe?.steps || [],
-    tips: data.tips || '',
-    isFavorite: data.isFavorite || false
+    image: import.meta.env.BASE_URL + `Img/${recipeName}.jpeg`,
+    time: 15,
+    difficulty: '簡單',
+    category: '晚餐',
+    tags: [],
+    ingredients: [],
+    steps: [],
+    tips: '',
+    isFavorite: false
   }
 }
 
 // Firestore helper to convert Recipe to storable doc
 const recipeToDoc = (recipe: Recipe) => {
-  // 只保存基本資料，簡化複雜物件避免序列化錯誤
+  // 只存儲食譜名稱和最小必要資料
   return {
     name: recipe.name,
-    time: recipe.time,
-    difficulty: recipe.difficulty,
-    category: recipe.category,
-    tags: recipe.tags || [],
-    tips: typeof recipe.tips === 'string' ? recipe.tips : '',
     isFavorite: recipe.isFavorite || false,
     updatedAt: new Date()
   }
