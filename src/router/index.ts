@@ -4,7 +4,6 @@ import Calendar from '../pages/Calendar.vue'
 import Ingredients from '../pages/Ingredients.vue'
 import Recipes from '../pages/Recipes.vue'
 import RecipeDetail from '../pages/RecipeDetail.vue'
-import Bot from '../pages/Bot.vue'
 import IngredientForm from '../pages/IngredientForm.vue'
 import RecipeForm from '../pages/RecipeForm.vue'
 
@@ -18,7 +17,6 @@ const routes = [
   { path: '/recipes/new', component: RecipeForm },
   { path: '/recipes/:id', component: RecipeDetail },
   { path: '/recipes/:id/edit', component: RecipeForm },
-  { path: '/bot', component: Bot },
 ]
 
 const router = createRouter({

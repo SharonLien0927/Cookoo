@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { Home, Calendar, Package, BookOpen, MessageCircle } from 'lucide-vue-next'
+import { Home, Calendar, Package, BookOpen } from 'lucide-vue-next'
 
 const route = useRoute()
 
@@ -28,7 +28,6 @@ const tabs = [
   { path: '/calendar', icon: Calendar, label: '日曆' },
   { path: '/ingredients', icon: Package, label: '食材' },
   { path: '/recipes', icon: BookOpen, label: '食譜' },
-  { path: '/bot', icon: MessageCircle, label: 'Bot' },
 ]
 
 const isActive = (path: string) => route.path === path
