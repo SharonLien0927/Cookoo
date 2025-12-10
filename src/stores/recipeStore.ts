@@ -42,34 +42,42 @@ let unsubscribe: (() => void) | null = null
 const docToRecipe = (docId: string, data: any): Recipe => {
   const recipeName = data.name || ''
   
-  // 完全從 mockRecipes 獲取食譜資料，Firestore 只作為名單確認
-  const mockRecipe = mockRecipes.find(r => r.name === recipeName)
+  // 首先從 mockRecipes 查找（用於初始的 6 筆食譜）
+  let mockRecipe = mockRecipes.find(r => r.name === recipeName)
   
+  // 如果找到，使用 mockRecipe 的完整資料但用 Firestore ID
   if (mockRecipe) {
     return { ...mockRecipe, id: docId }
   }
   
-  // 備用：如果在 mockRecipes 找不到，返回空食譜
+  // 否則，用 Firestore 中儲存的完整資料（用戶新增的食譜）
   return {
     id: docId,
     name: recipeName,
     image: import.meta.env.BASE_URL + `Img/${recipeName}.jpeg`,
-    time: 15,
-    difficulty: '簡單',
-    category: '晚餐',
-    tags: [],
-    ingredients: [],
-    steps: [],
-    tips: '',
-    isFavorite: false
+    time: data.time || 15,
+    difficulty: data.difficulty || '簡單',
+    category: data.category || '晚餐',
+    tags: Array.isArray(data.tags) ? data.tags : [],
+    ingredients: Array.isArray(data.ingredients) ? data.ingredients : [],
+    steps: Array.isArray(data.steps) ? data.steps : [],
+    tips: data.tips || '',
+    isFavorite: data.isFavorite || false
   }
 }
 
 // Firestore helper to convert Recipe to storable doc
 const recipeToDoc = (recipe: Recipe) => {
-  // 只存儲食譜名稱和最小必要資料
+  // 存儲完整食譜資料到 Firestore（包括 ingredients 和 steps）
   return {
     name: recipe.name,
+    time: recipe.time,
+    difficulty: recipe.difficulty,
+    category: recipe.category,
+    tags: recipe.tags || [],
+    ingredients: recipe.ingredients || [],
+    steps: recipe.steps || [],
+    tips: recipe.tips || '',
     isFavorite: recipe.isFavorite || false,
     updatedAt: new Date()
   }
