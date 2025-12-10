@@ -51,16 +51,27 @@ const docToRecipe = (docId: string, data: any): Recipe => {
   }
   
   // 否則，用 Firestore 中儲存的完整資料（用戶新增的食譜）
+  // 確保陣列欄位一定是陣列
+  const tags = Array.isArray(data.tags) ? data.tags : (data.tags ? [data.tags] : [])
+  const ingredients = Array.isArray(data.ingredients) ? data.ingredients : (data.ingredients ? [data.ingredients] : [])
+  const steps = Array.isArray(data.steps) ? data.steps : (data.steps ? [data.steps] : [])
+  
+  console.log(`📥 Loading recipe "${recipeName}":`, { 
+    tagsCount: tags.length, 
+    ingredientsCount: ingredients.length, 
+    stepsCount: steps.length 
+  })
+  
   return {
     id: docId,
     name: recipeName,
     image: import.meta.env.BASE_URL + `Img/${recipeName}.jpeg`,
-    time: data.time || 15,
+    time: Number(data.time) || 15,
     difficulty: data.difficulty || '簡單',
     category: data.category || '晚餐',
-    tags: Array.isArray(data.tags) ? data.tags : [],
-    ingredients: Array.isArray(data.ingredients) ? data.ingredients : [],
-    steps: Array.isArray(data.steps) ? data.steps : [],
+    tags: tags,
+    ingredients: ingredients,
+    steps: steps,
     tips: data.tips || '',
     isFavorite: data.isFavorite || false
   }

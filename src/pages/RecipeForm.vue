@@ -386,7 +386,14 @@ const onSave = async () => {
       tips: form.value.tips || '',
       isFavorite: false,
     }
+    console.log('📝 Saving new recipe:', {
+      name: newRecipe.name,
+      ingredientsCount: newRecipe.ingredients.length,
+      stepsCount: newRecipe.steps.length,
+      category: newRecipe.category,
+    })
     const savedRecipe = await recipeStore.add(newRecipe)
+    console.log('✅ Recipe saved with ID:', savedRecipe.id)
     // 使用 Firestore 返回的正確 ID 導向詳細頁
     router.push(`/recipes/${savedRecipe.id}`)
   }
