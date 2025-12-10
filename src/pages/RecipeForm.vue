@@ -353,12 +353,47 @@ const onFileChange = (e: Event) => {
   const input = e.target as HTMLInputElement
   if (!input.files || input.files.length === 0) return
   const file = input.files[0]
+  
+  // 檢查檔案大小 (限制 5MB)
+  const maxSize = 5 * 1024 * 1024 // 5MB
+  if (file.size > maxSize) {
+    alert(`檔案過大！最大限制為 5MB，你的檔案是 ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+    return
+  }
+  
   const reader = new FileReader()
   reader.onload = () => {
-    // 顯示本地預覽
-    form.value.image = reader.result as string
-    // 儲存檔案物件供上傳用
-    selectedFile.value = file
+    const img = new Image()
+    img.onload = () => {
+      // 壓縮圖片
+      const canvas = document.createElement('canvas')
+      let width = img.width
+      let height = img.height
+      
+      // 限制最大寬度 1200px，保持比例
+      if (width > 1200) {
+        height = (height * 1200) / width
+        width = 1200
+      }
+      
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, width, height)
+      
+      // 轉換為 JPEG，品質 80%
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8)
+      form.value.image = compressedDataUrl
+      
+      // 儲存原始檔案供上傳用
+      selectedFile.value = file
+      
+      // 計算壓縮率
+      const originalSize = file.size / 1024
+      const estimatedSize = (compressedDataUrl.length * 3) / 4 / 1024
+      console.log(`📸 圖片壓縮: ${originalSize.toFixed(1)}KB → ~${estimatedSize.toFixed(1)}KB`)
+    }
+    img.src = reader.result as string
   }
   reader.readAsDataURL(file)
 }
@@ -382,16 +417,23 @@ const onSave = async () => {
     // 新增食譜 - 先上傳照片到 Firebase Storage
     let imageUrl = 'https://via.placeholder.com/400x300'
     
-    if (selectedFile.value) {
+    if (form.value.image && form.value.image.startsWith('data:')) {
       try {
-        console.log('📸 Uploading image to Firebase Storage...')
-        const fileName = `recipes/${Date.now()}_${selectedFile.value.name}`
+        console.log('📸 轉換壓縮後的圖片為檔案...')
+        
+        // 將 Data URL 轉換回 Blob
+        const response = await fetch(form.value.image)
+        const blob = await response.blob()
+        
+        console.log(`📤 上傳圖片到 Firebase Storage (${(blob.size / 1024).toFixed(1)}KB)...`)
+        const fileName = `recipes/${Date.now()}_${form.value.name}.jpg`
         const fileRef = storageRef(storage, fileName)
-        await uploadBytes(fileRef, selectedFile.value)
+        
+        await uploadBytes(fileRef, blob)
         imageUrl = await getDownloadURL(fileRef)
-        console.log('✅ Image uploaded:', imageUrl)
+        console.log('✅ 圖片上傳成功')
       } catch (error) {
-        console.error('❌ Image upload failed:', error)
+        console.error('❌ 圖片上傳失敗:', error)
         alert('照片上傳失敗，將使用預設圖片')
       }
     }
@@ -409,15 +451,14 @@ const onSave = async () => {
       tips: form.value.tips || '',
       isFavorite: false,
     }
-    console.log('📝 Saving new recipe:', {
+    console.log('📝 儲存食譜:', {
       name: newRecipe.name,
       ingredientsCount: newRecipe.ingredients.length,
       stepsCount: newRecipe.steps.length,
       category: newRecipe.category,
     })
     const savedRecipe = await recipeStore.add(newRecipe)
-    console.log('✅ Recipe saved with ID:', savedRecipe.id)
-    // 使用 Firestore 返回的正確 ID 導向詳細頁
+    console.log('✅ 食譜已儲存，ID:', savedRecipe.id)
     router.push(`/recipes/${savedRecipe.id}`)
   }
 }
