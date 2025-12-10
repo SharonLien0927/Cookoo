@@ -240,6 +240,8 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Recipe, Ingredient } from '../types'
 import { recipeStore } from '../stores/recipeStore'
+import { storage } from '../firebase/db'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 const route = useRoute()
 const router = useRouter()
@@ -353,10 +355,15 @@ const onFileChange = (e: Event) => {
   const file = input.files[0]
   const reader = new FileReader()
   reader.onload = () => {
+    // 顯示本地預覽
     form.value.image = reader.result as string
+    // 儲存檔案物件供上傳用
+    selectedFile.value = file
   }
   reader.readAsDataURL(file)
 }
+
+const selectedFile = ref<File | null>(null)
 
 const onSave = async () => {
   if (!form.value.name || mealCategories.value.length === 0) {
@@ -372,11 +379,27 @@ const onSave = async () => {
     await recipeStore.update(id, form.value)
     router.push(`/recipes/${id}`)
   } else {
-    // 新增食譜
+    // 新增食譜 - 先上傳照片到 Firebase Storage
+    let imageUrl = 'https://via.placeholder.com/400x300'
+    
+    if (selectedFile.value) {
+      try {
+        console.log('📸 Uploading image to Firebase Storage...')
+        const fileName = `recipes/${Date.now()}_${selectedFile.value.name}`
+        const fileRef = storageRef(storage, fileName)
+        await uploadBytes(fileRef, selectedFile.value)
+        imageUrl = await getDownloadURL(fileRef)
+        console.log('✅ Image uploaded:', imageUrl)
+      } catch (error) {
+        console.error('❌ Image upload failed:', error)
+        alert('照片上傳失敗，將使用預設圖片')
+      }
+    }
+
     const newRecipe: Recipe = {
       id: Date.now().toString(),
       name: form.value.name!,
-      image: form.value.image || 'https://via.placeholder.com/400x300',
+      image: imageUrl,
       time: form.value.time || 15,
       difficulty: form.value.difficulty || '簡單',
       category: form.value.category || '晚餐',
