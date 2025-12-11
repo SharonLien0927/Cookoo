@@ -1,67 +1,82 @@
 <template>
-  <div class="min-h-screen bg-white p-4">
-    <h1 class="text-2xl font-bold mb-4">🔧 Debug Status</h1>
-    
-    <div class="space-y-4">
-      <!-- Firebase Status -->
-      <div class="border-2 border-orange-200 rounded-lg p-4">
-        <h2 class="font-bold mb-2">Firebase Status</h2>
-        <div class="space-y-1 text-sm">
-          <p><span class="font-semibold">Project ID:</span> cookoo-e50ab</p>
-          <p><span class="font-semibold">Firestore Ready:</span> {{ firestoreReady }}</p>
-          <p><span class="font-semibold">Local Recipes:</span> {{ recipes.length }}</p>
+  <div class="min-h-screen bg-gradient-to-b from-orange-50 to-white pb-20">
+    <!-- 頂部手繪裝飾 -->
+    <div class="relative h-20 overflow-hidden">
+      <svg viewBox="0 0 400 80" class="w-full h-full text-orange-300 opacity-40">
+        <path d="M 0 40 Q 50 20, 100 40 T 200 40 T 300 40 T 400 40" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+      </svg>
+    </div>
+
+    <div class="max-w-md mx-auto px-4 py-4 space-y-4">
+      <h1 class="text-3xl font-bold text-gray-900 text-center">🔧 Debug</h1>
+      
+      <!-- Firebase Status Card -->
+      <div class="bg-white rounded-3xl shadow-md border-2 border-orange-200 p-4">
+        <h2 class="text-lg font-bold text-gray-900 mb-3">Firebase Status</h2>
+        <div class="space-y-2 text-sm bg-orange-50 rounded-2xl p-3">
+          <p class="font-semibold">📌 Project: cookoo-e50ab</p>
+          <p class="font-semibold">📦 Firestore Ready: <span :class="firestoreReady ? 'text-green-600' : 'text-red-600'">{{ firestoreReady ? '✅ YES' : '❌ NO' }}</span></p>
+          <p class="font-semibold">📋 Local Recipes: {{ recipes.length }} 筆</p>
         </div>
       </div>
-      
-      <!-- Recipes List -->
-      <div class="border-2 border-orange-200 rounded-lg p-4">
-        <h2 class="font-bold mb-2">📋 Local Recipes</h2>
-        <div class="text-sm space-y-2">
-          <div v-if="recipes.length === 0" class="text-gray-500">No recipes</div>
-          <div v-for="recipe in recipes" :key="recipe.id" class="bg-gray-50 p-2 rounded">
-            <p><span class="font-semibold">{{ recipe.name }}</span> (ID: {{ recipe.id }})</p>
-            <p class="text-xs text-gray-500">Category: {{ recipe.category }}</p>
-            <p class="text-xs text-gray-500">Image: {{ recipe.image?.substring(0, 50) }}...</p>
+
+      <!-- Local Recipes List -->
+      <div class="bg-white rounded-3xl shadow-md border-2 border-orange-200 p-4">
+        <h2 class="text-lg font-bold text-gray-900 mb-3">📋 你的食譜</h2>
+        <div class="space-y-2">
+          <div v-if="recipes.length === 0" class="text-center text-gray-500 py-4">
+            還沒有食譜
+          </div>
+          <div v-for="recipe in recipes" :key="recipe.id" class="bg-orange-50 rounded-2xl p-3 border border-orange-200">
+            <p class="font-bold text-orange-600">{{ recipe.name }}</p>
+            <p class="text-xs text-gray-500">ID: {{ recipe.id }}</p>
+            <p class="text-xs text-gray-500">分類: {{ recipe.category }}</p>
           </div>
         </div>
       </div>
-      
-      <!-- Test Firestore Write -->
-      <div class="border-2 border-orange-200 rounded-lg p-4">
-        <h2 class="font-bold mb-2">🧪 Test Firestore Write</h2>
+
+      <!-- Test Button -->
+      <div class="bg-white rounded-3xl shadow-md border-2 border-orange-200 p-4">
         <button 
           @click="testFirestoreWrite"
-          class="bg-orange-400 hover:bg-orange-500 text-white px-4 py-2 rounded-full font-semibold"
+          class="w-full bg-orange-400 hover:bg-orange-500 text-white px-4 py-3 rounded-full font-bold text-lg"
         >
-          Test Write
+          🧪 測試寫入 Firestore
         </button>
-        <div v-if="writeResult" class="mt-2 p-2 rounded bg-gray-50 text-sm">
-          <p :class="writeResult.success ? 'text-green-600' : 'text-red-600'">
+        
+        <div v-if="writeResult" class="mt-3 p-3 rounded-2xl" :class="writeResult.success ? 'bg-green-100 border-2 border-green-400' : 'bg-red-100 border-2 border-red-400'">
+          <p class="font-bold text-sm" :class="writeResult.success ? 'text-green-700' : 'text-red-700'">
             {{ writeResult.message }}
           </p>
         </div>
       </div>
-      
-      <!-- Console Output -->
-      <div class="border-2 border-orange-200 rounded-lg p-4">
-        <h2 class="font-bold mb-2">📝 Recent Logs</h2>
-        <div class="text-xs bg-gray-900 text-green-400 p-3 rounded max-h-60 overflow-y-auto font-mono">
-          <div v-for="(log, idx) in logs" :key="idx" class="whitespace-pre-wrap">{{ log }}</div>
+
+      <!-- Console Logs -->
+      <div class="bg-white rounded-3xl shadow-md border-2 border-orange-200 p-4">
+        <h2 class="text-lg font-bold text-gray-900 mb-3">📝 Console 輸出</h2>
+        <div class="bg-gray-900 text-green-400 p-3 rounded-2xl max-h-64 overflow-y-auto font-mono text-xs leading-relaxed">
+          <div v-if="logs.length === 0" class="text-gray-500">
+            等待日誌輸出...
+          </div>
+          <div v-for="(log, idx) in logs" :key="idx" class="whitespace-pre-wrap break-words">
+            {{ log }}
+          </div>
         </div>
       </div>
-      
+
+      <!-- Back Button -->
       <button 
         @click="() => $router.push('/recipes')"
-        class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full font-semibold"
+        class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-full font-bold"
       >
-        Back to Recipes
+        回到食譜列表
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { recipeStore } from '../stores/recipeStore'
 import { collection, addDoc } from 'firebase/firestore'
 import { db } from '../firebase/db'
@@ -76,53 +91,76 @@ const originalLog = console.log
 const originalError = console.error
 const originalWarn = console.warn
 
-console.log = (...args: any[]) => {
-  logs.value.push(args.join(' '))
+const addLog = (message: string) => {
+  logs.value.push(message)
   if (logs.value.length > 50) logs.value.shift()
+}
+
+console.log = (...args: any[]) => {
+  const msg = args.join(' ')
+  addLog(msg)
   originalLog(...args)
 }
 
 console.error = (...args: any[]) => {
-  logs.value.push('ERROR: ' + args.join(' '))
-  if (logs.value.length > 50) logs.value.shift()
+  const msg = 'ERROR: ' + args.join(' ')
+  addLog(msg)
   originalError(...args)
 }
 
 console.warn = (...args: any[]) => {
-  logs.value.push('WARN: ' + args.join(' '))
-  if (logs.value.length > 50) logs.value.shift()
+  const msg = 'WARN: ' + args.join(' ')
+  addLog(msg)
   originalWarn(...args)
 }
 
+onMounted(() => {
+  addLog('✅ Debug 頁面已載入')
+  addLog('正在檢查 Firestore 狀態...')
+  
+  // 簡單延遲後檢查是否就緒
+  setTimeout(() => {
+    const isReady = (window as any).__FIRESTORE_READY__ || false
+    firestoreReady.value = isReady
+    addLog(`Firestore 狀態: ${isReady ? '✅ 已就緒' : '⏳ 初始化中...'}`)
+  }, 2000)
+})
+
 const testFirestoreWrite = async () => {
   writeResult.value = null
+  addLog('🧪 開始測試 Firestore 寫入...')
+  
   try {
-    console.log('🧪 Testing Firestore write...')
     const testDoc = {
-      name: `Test Recipe ${Date.now()}`,
+      name: `Test-${Date.now()}`,
       category: 'test',
       time: 15,
       difficulty: '簡單',
       tags: [],
       ingredients: [],
       steps: [],
-      tips: '',
+      tips: 'This is a test document',
       image: 'https://via.placeholder.com/400x300',
       isFavorite: false,
       testTimestamp: new Date()
     }
     
+    addLog('📤 發送資料到 Firestore...')
     const docRef = await addDoc(collection(db, 'recipes'), testDoc)
-    console.log('✅ Test write successful! Doc ID:', docRef.id)
+    addLog(`✅ 寫入成功! Document ID: ${docRef.id}`)
+    
     writeResult.value = {
       success: true,
-      message: `✅ Write successful! Document ID: ${docRef.id}`
+      message: `✅ 寫入成功! Document ID: ${docRef.id}`
     }
   } catch (error: any) {
-    console.error('❌ Test write failed:', error)
+    addLog(`❌ 寫入失敗!`)
+    addLog(`錯誤代碼: ${error.code}`)
+    addLog(`錯誤訊息: ${error.message}`)
+    
     writeResult.value = {
       success: false,
-      message: `❌ Write failed: ${error.message}`
+      message: `❌ 寫入失敗: ${error.message}`
     }
   }
 }
