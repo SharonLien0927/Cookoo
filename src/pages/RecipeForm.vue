@@ -361,10 +361,10 @@ const onFileChange = (e: Event) => {
       let width = img.width
       let height = img.height
       
-      // 限制最大寬度 800px，保持比例（更激進的壓縮）
-      if (width > 800) {
-        height = (height * 800) / width
-        width = 800
+      // 限制最大寬度 600px，保持比例（更激進的壓縮）
+      if (width > 600) {
+        height = (height * 600) / width
+        width = 600
       }
       
       canvas.width = width
@@ -372,17 +372,17 @@ const onFileChange = (e: Event) => {
       const ctx = canvas.getContext('2d')!
       ctx.drawImage(img, 0, 0, width, height)
       
-      // 嘗試逐步降低品質直到 < 200KB
-      let quality = 0.7
+      // 嘗試逐步降低品質直到 < 100KB（為了省 Firestore 配額）
+      let quality = 0.65
       let compressedDataUrl = canvas.toDataURL('image/jpeg', quality)
       
       // Base64 轉成實際大小 (除以 4/3)
-      while ((compressedDataUrl.length * 3) / 4 / 1024 > 200 && quality > 0.3) {
+      while ((compressedDataUrl.length * 3) / 4 / 1024 > 100 && quality > 0.2) {
         quality -= 0.05
         compressedDataUrl = canvas.toDataURL('image/jpeg', quality)
       }
       
-      if ((compressedDataUrl.length * 3) / 4 / 1024 > 200) {
+      if ((compressedDataUrl.length * 3) / 4 / 1024 > 100) {
         alert('圖片無法壓縮到足夠小，請選擇更小的圖片')
         return
       }
