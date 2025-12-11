@@ -79,9 +79,11 @@ const docToRecipe = (docId: string, data: any): Recipe => {
 
 // Firestore helper to convert Recipe to storable doc
 const recipeToDoc = (recipe: Recipe) => {
-  // 存儲完整食譜資料到 Firestore（包括 ingredients 和 steps）
+  // 儲存完整食譜資料到 Firestore（包括壓縮後的 Base64 圖片）
+  // 注意：Base64 圖片會很大，但 Firestore 允許最大 1MB
   return {
     name: recipe.name,
+    image: recipe.image, // Base64 或 URL
     time: recipe.time,
     difficulty: recipe.difficulty,
     category: recipe.category,
@@ -131,12 +133,16 @@ const seedMockRecipes = async () => {
     console.log(`✨ Seeding complete!`)
     firestoreReady = true
     
-    // Set up listener AFTER seeding
+    // Set up real-time listener AFTER seeding
     const q2 = query(collection(db, COLLECTION_NAME))
     unsubscribe = onSnapshot(q2, (snapshot) => {
-      recipesRef.value = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
-      console.log(`📲 Updated: ${recipesRef.value.length} recipes`)
+      const loaded = snapshot.docs.map(d => docToRecipe(d.id, d.data()))
+      recipesRef.value = loaded
+      console.log(`📲 Listener updated: ${loaded.length} recipes`)
+      console.log('🔄 Recipe names:', loaded.map(r => r.name))
       save(recipesRef.value)
+    }, (error) => {
+      console.error('❌ Listener error:', error)
     })
   } catch (error) {
     console.error('❌ Seed failed:', error)
@@ -163,13 +169,15 @@ export const recipeStore = {
     // The onSnapshot listener will automatically update local state
     if (firestoreReady) {
       try {
+        console.log(`➕ Adding recipe to Firestore: "${recipe.name}"`)
         const docRef = await addDoc(collection(db, COLLECTION_NAME), recipeToDoc(recipe))
+        console.log(`✅ Recipe added with Firestore ID: ${docRef.id}`)
         const recipeWithFirestoreId = { ...recipe, id: docRef.id }
         // Return the recipe with Firestore ID for navigation
         // Don't manually push to recipes.value - let the listener handle it
         return recipeWithFirestoreId
       } catch (error) {
-        console.error('Failed to add recipe to Firestore:', error)
+        console.error('❌ Failed to add recipe to Firestore:', error)
         // Fall back to local-only if Firestore fails
         this.recipes.value.push(recipe)
         save(this.recipes.value)
@@ -177,6 +185,7 @@ export const recipeStore = {
       }
     } else {
       // Firestore not ready yet, use local storage
+      console.warn('⚠️ Firestore not ready, saving to local storage only')
       this.recipes.value.push(recipe)
       save(this.recipes.value)
       return recipe
