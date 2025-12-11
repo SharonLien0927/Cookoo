@@ -6,6 +6,7 @@ import Recipes from '../pages/Recipes.vue'
 import RecipeDetail from '../pages/RecipeDetail.vue'
 import IngredientForm from '../pages/IngredientForm.vue'
 import RecipeForm from '../pages/RecipeForm.vue'
+import Debug from '../pages/Debug.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -17,6 +18,7 @@ const routes = [
   { path: '/recipes/new', component: RecipeForm },
   { path: '/recipes/:id', component: RecipeDetail },
   { path: '/recipes/:id/edit', component: RecipeForm },
+  { path: '/debug', component: Debug },
 ]
 
 const router = createRouter({
