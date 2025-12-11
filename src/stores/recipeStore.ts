@@ -159,6 +159,42 @@ const seedMockRecipes = async () => {
 // Start seeding immediately
 seedMockRecipes()
 
+// Periodically check if any local recipes need to be synced to Firestore
+const syncLocalToFirestore = async () => {
+  if (!firestoreReady) {
+    console.warn('⚠️ Firestore not ready yet, skipping sync')
+    return
+  }
+  
+  console.log('🔄 Checking for unsynced recipes...')
+  const q = query(collection(db, COLLECTION_NAME))
+  const snapshot = await getDocs(q)
+  const firestoreIds = new Set(snapshot.docs.map(d => d.id))
+  const firestoreNames = new Set(snapshot.docs.map(d => d.data().name))
+  
+  for (const recipe of recipesRef.value) {
+    // 如果是本地生成的 ID（時間戳），需要同步
+    if (recipe.id && /^\d+$/.test(recipe.id) && !firestoreNames.has(recipe.name)) {
+      try {
+        console.log(`🔄 Syncing unsynced recipe: "${recipe.name}"`)
+        const docRef = await addDoc(collection(db, COLLECTION_NAME), recipeToDoc(recipe))
+        // 更新本地的 ID
+        const idx = recipesRef.value.findIndex(r => r.name === recipe.name && r.id === recipe.id)
+        if (idx >= 0) {
+          recipesRef.value[idx].id = docRef.id
+          save(recipesRef.value)
+        }
+        console.log(`✅ Synced with Firestore ID: ${docRef.id}`)
+      } catch (error) {
+        console.error(`❌ Failed to sync "${recipe.name}":`, error)
+      }
+    }
+  }
+}
+
+// 每 10 秒檢查一次
+setInterval(syncLocalToFirestore, 10000)
+
 export const recipeStore = {
   recipes: recipesRef,
 
@@ -172,36 +208,41 @@ export const recipeStore = {
   },
 
   async add(recipe: Recipe) {
-    // If Firestore is ready, add directly to Firestore
-    // The onSnapshot listener will automatically update local state
+    // 先加到本地顯示（立即回饋給用戶）
+    const newRecipe = { ...recipe }
+    if (!newRecipe.id) {
+      newRecipe.id = Date.now().toString()
+    }
+    this.recipes.value.push(newRecipe)
+    save(this.recipes.value)
+    console.log(`📝 Recipe added to local storage: "${newRecipe.name}" (ID: ${newRecipe.id})`)
+
+    // 然後嘗試同步到 Firestore（異步，不阻擋 UI）
     if (firestoreReady) {
       try {
-        console.log(`➕ Adding recipe to Firestore: "${recipe.name}"`)
+        console.log(`🔄 Syncing to Firestore: "${recipe.name}"`)
         const recipeData = recipeToDoc(recipe)
         console.log(`   Image size: ${recipe.image?.length ? (recipe.image.length / 1024).toFixed(1) : 0}KB`)
         
         const docRef = await addDoc(collection(db, COLLECTION_NAME), recipeData)
-        console.log(`✅ Recipe added with Firestore ID: ${docRef.id}`)
-        console.log(`   Firestore listener should pick it up automatically...`)
+        console.log(`✅ Synced to Firestore with ID: ${docRef.id}`)
         
-        const recipeWithFirestoreId = { ...recipe, id: docRef.id }
-        // Return the recipe with Firestore ID for navigation
-        // Don't manually push to recipes.value - let the listener handle it
-        return recipeWithFirestoreId
+        // 更新本地的 ID 為 Firestore ID
+        const idx = this.recipes.value.findIndex(r => r.id === newRecipe.id)
+        if (idx >= 0) {
+          this.recipes.value[idx].id = docRef.id
+          save(this.recipes.value)
+        }
+        
+        return { ...newRecipe, id: docRef.id }
       } catch (error) {
-        console.error('❌ Failed to add recipe to Firestore:', error)
-        // Fall back to local-only if Firestore fails
-        console.warn('⚠️ Falling back to local storage')
-        this.recipes.value.push(recipe)
-        save(this.recipes.value)
-        return recipe
+        console.error('❌ Failed to sync to Firestore:', error)
+        console.error('   But recipe is saved locally, it will sync when Firestore connection recovers')
+        return newRecipe
       }
     } else {
-      // Firestore not ready yet, use local storage
-      console.warn('⚠️ Firestore not ready, saving to local storage only')
-      this.recipes.value.push(recipe)
-      save(this.recipes.value)
-      return recipe
+      console.warn('⚠️ Firestore not ready, recipe saved to local storage only')
+      return newRecipe
     }
   },
 
