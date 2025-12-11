@@ -240,8 +240,6 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Recipe, Ingredient } from '../types'
 import { recipeStore } from '../stores/recipeStore'
-import { storage } from '../firebase/db'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 const route = useRoute()
 const router = useRouter()
@@ -354,13 +352,6 @@ const onFileChange = (e: Event) => {
   if (!input.files || input.files.length === 0) return
   const file = input.files[0]
   
-  // 檢查檔案大小 (限制 5MB)
-  const maxSize = 5 * 1024 * 1024 // 5MB
-  if (file.size > maxSize) {
-    alert(`檔案過大！最大限制為 5MB，你的檔案是 ${(file.size / 1024 / 1024).toFixed(2)}MB`)
-    return
-  }
-  
   const reader = new FileReader()
   reader.onload = () => {
     const img = new Image()
@@ -370,10 +361,10 @@ const onFileChange = (e: Event) => {
       let width = img.width
       let height = img.height
       
-      // 限制最大寬度 1200px，保持比例
-      if (width > 1200) {
-        height = (height * 1200) / width
-        width = 1200
+      // 限制最大寬度 800px，保持比例（更激進的壓縮）
+      if (width > 800) {
+        height = (height * 800) / width
+        width = 800
       }
       
       canvas.width = width
@@ -381,17 +372,27 @@ const onFileChange = (e: Event) => {
       const ctx = canvas.getContext('2d')!
       ctx.drawImage(img, 0, 0, width, height)
       
-      // 轉換為 JPEG，品質 80%
-      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8)
-      form.value.image = compressedDataUrl
+      // 嘗試逐步降低品質直到 < 200KB
+      let quality = 0.7
+      let compressedDataUrl = canvas.toDataURL('image/jpeg', quality)
       
-      // 儲存原始檔案供上傳用
-      selectedFile.value = file
+      // Base64 轉成實際大小 (除以 4/3)
+      while ((compressedDataUrl.length * 3) / 4 / 1024 > 200 && quality > 0.3) {
+        quality -= 0.05
+        compressedDataUrl = canvas.toDataURL('image/jpeg', quality)
+      }
+      
+      if ((compressedDataUrl.length * 3) / 4 / 1024 > 200) {
+        alert('圖片無法壓縮到足夠小，請選擇更小的圖片')
+        return
+      }
+      
+      form.value.image = compressedDataUrl
       
       // 計算壓縮率
       const originalSize = file.size / 1024
-      const estimatedSize = (compressedDataUrl.length * 3) / 4 / 1024
-      console.log(`📸 圖片壓縮: ${originalSize.toFixed(1)}KB → ~${estimatedSize.toFixed(1)}KB`)
+      const finalSize = (compressedDataUrl.length * 3) / 4 / 1024
+      console.log(`📸 圖片壓縮: ${originalSize.toFixed(1)}KB → ${finalSize.toFixed(1)}KB (品質: ${(quality * 100).toFixed(0)}%)`)
     }
     img.src = reader.result as string
   }
@@ -414,28 +415,13 @@ const onSave = async () => {
     await recipeStore.update(id, form.value)
     router.push(`/recipes/${id}`)
   } else {
-    // 新增食譜 - 先上傳照片到 Firebase Storage
-    let imageUrl = 'https://via.placeholder.com/400x300'
+    // 新增食譜 - 圖片直接存 Firestore Base64
+    // 圖片已在 onFileChange 壓縮完成，直接用
+    const imageUrl = form.value.image || 'https://via.placeholder.com/400x300'
     
-    if (form.value.image && form.value.image.startsWith('data:')) {
-      try {
-        console.log('📸 轉換壓縮圖片為 Blob...')
-        
-        // 將 Data URL 轉換回 Blob
-        const response = await fetch(form.value.image)
-        const blob = await response.blob()
-        
-        console.log(`📤 上傳圖片到 Firebase Storage (${(blob.size / 1024).toFixed(1)}KB)...`)
-        const fileName = `recipes/${Date.now()}_${form.value.name}.jpg`
-        const fileRef = storageRef(storage, fileName)
-        
-        await uploadBytes(fileRef, blob)
-        imageUrl = await getDownloadURL(fileRef)
-        console.log('✅ 圖片上傳成功:', imageUrl)
-      } catch (error) {
-        console.error('❌ 圖片上傳失敗:', error)
-        alert('照片上傳失敗，將使用預設圖片')
-      }
+    if (form.value.image) {
+      const sizeMB = (form.value.image.length * 3) / 4 / 1024 / 1024
+      console.log(`📸 使用壓縮圖片 (Base64, ${(sizeMB * 1024).toFixed(1)}KB)`)
     }
 
     const newRecipe: Recipe = {
