@@ -414,13 +414,28 @@ const onSave = async () => {
     await recipeStore.update(id, form.value)
     router.push(`/recipes/${id}`)
   } else {
-    // 新增食譜
+    // 新增食譜 - 先上傳照片到 Firebase Storage
     let imageUrl = 'https://via.placeholder.com/400x300'
     
-    // 如果有圖片，直接用壓縮後的 Base64
     if (form.value.image && form.value.image.startsWith('data:')) {
-      imageUrl = form.value.image
-      console.log(`📸 使用壓縮圖片 (Base64, ~${(form.value.image.length / 1024).toFixed(1)}KB)`)
+      try {
+        console.log('📸 轉換壓縮圖片為 Blob...')
+        
+        // 將 Data URL 轉換回 Blob
+        const response = await fetch(form.value.image)
+        const blob = await response.blob()
+        
+        console.log(`📤 上傳圖片到 Firebase Storage (${(blob.size / 1024).toFixed(1)}KB)...`)
+        const fileName = `recipes/${Date.now()}_${form.value.name}.jpg`
+        const fileRef = storageRef(storage, fileName)
+        
+        await uploadBytes(fileRef, blob)
+        imageUrl = await getDownloadURL(fileRef)
+        console.log('✅ 圖片上傳成功:', imageUrl)
+      } catch (error) {
+        console.error('❌ 圖片上傳失敗:', error)
+        alert('照片上傳失敗，將使用預設圖片')
+      }
     }
 
     const newRecipe: Recipe = {
