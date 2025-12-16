@@ -1,0 +1,37 @@
+{
+  "name": "Cookoo廚呼",
+  "short_name": "廚呼",
+  "description": "上班族的快速料理助手",
+  "start_url": "/Cookoo/",
+  "scope": "/Cookoo/",
+  "display": "standalone",
+  "background_color": "#faf9f7",
+  "theme_color": "#fb923c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/Cookoo/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Cookoo/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Cookoo/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/Cookoo/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
